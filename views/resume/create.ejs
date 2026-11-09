@@ -1,0 +1,354 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-9">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body p-4 p-md-5">
+
+                    <div class="text-center mb-4">
+
+                        <i class="bi bi-file-earmark-person display-4 text-primary"></i>
+
+                        <h2 class="fw-bold mt-3">
+                            Create Your Resume
+                        </h2>
+
+                        <p class="text-muted">
+                            Enter your information to create a professional resume.
+                        </p>
+
+                    </div>
+
+
+                    <form action="/resume/create" method="POST">
+
+
+                        <!-- Personal Information -->
+
+                        <h4 class="fw-bold mb-3">
+                            <i class="bi bi-person text-primary"></i>
+                            Personal Information
+                        </h4>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Full Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="fullName"
+                                    class="form-control"
+                                    value="<%= currUser.fullName || '' %>"
+                                    required>
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Email
+                                </label>
+
+                                <input
+                                    type="email"
+                                    name="email"
+                                    class="form-control"
+                                    value="<%= currUser.email || '' %>"
+                                    required>
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Phone
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="phone"
+                                    class="form-control">
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Location
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="location"
+                                    class="form-control">
+
+                            </div>
+
+
+                            <div class="col-12">
+
+                                <label class="form-label">
+                                    Professional Summary
+                                </label>
+
+                                <textarea
+                                    name="summary"
+                                    class="form-control"
+                                    rows="4"
+                                    placeholder="Write a short professional summary..."></textarea>
+
+                            </div>
+
+                        </div>
+
+
+                        <hr class="my-4">
+
+
+                        <!-- Education -->
+
+                        <h4 class="fw-bold mb-3">
+
+                            <i class="bi bi-mortarboard text-primary"></i>
+
+                            Education
+
+                        </h4>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Degree
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="degree"
+                                    class="form-control"
+                                    placeholder="e.g. MCA">
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    University
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="university"
+                                    class="form-control">
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Graduation Year
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="graduationYear"
+                                    class="form-control"
+                                    placeholder="2026">
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    CGPA / Percentage
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="cgpa"
+                                    class="form-control">
+
+                            </div>
+
+                        </div>
+
+
+                        <hr class="my-4">
+
+
+                        <!-- Skills -->
+
+                        <h4 class="fw-bold mb-3">
+
+                            <i class="bi bi-tools text-primary"></i>
+
+                            Skills
+
+                        </h4>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Skills
+                            </label>
+
+                            <input
+                                type="text"
+                                name="skills"
+                                class="form-control"
+                                placeholder="Java, Python, JavaScript, MongoDB, React.js">
+
+                            <small class="text-muted">
+                                Separate skills using commas.
+                            </small>
+
+                        </div>
+
+
+                        <hr class="my-4">
+
+
+                        <!-- Experience -->
+
+                        <h4 class="fw-bold mb-3">
+
+                            <i class="bi bi-briefcase text-primary"></i>
+
+                            Experience
+
+                        </h4>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Experience
+                            </label>
+
+                            <textarea
+                                name="experience"
+                                class="form-control"
+                                rows="4"
+                                placeholder="Describe your internship or work experience..."></textarea>
+
+                        </div>
+
+
+                        <hr class="my-4">
+
+
+                        <!-- Projects -->
+
+                        <h4 class="fw-bold mb-3">
+
+                            <i class="bi bi-code-square text-primary"></i>
+
+                            Projects
+
+                        </h4>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Projects
+                            </label>
+
+                            <textarea
+                                name="projects"
+                                class="form-control"
+                                rows="5"
+                                placeholder="Project name, technologies used and project description..."></textarea>
+
+                        </div>
+
+
+                        <hr class="my-4">
+
+
+                        <!-- Links -->
+
+                        <h4 class="fw-bold mb-3">
+
+                            <i class="bi bi-link-45deg text-primary"></i>
+
+                            Links
+
+                        </h4>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    LinkedIn
+                                </label>
+
+                                <input
+                                    type="url"
+                                    name="linkedin"
+                                    class="form-control"
+                                    placeholder="https://linkedin.com/...">
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    GitHub
+                                </label>
+
+                                <input
+                                    type="url"
+                                    name="github"
+                                    class="form-control"
+                                    placeholder="https://github.com/...">
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Submit -->
+
+                        <div class="text-center mt-5">
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary px-5">
+
+                                <i class="bi bi-file-earmark-check"></i>
+
+                                Generate Resume
+
+                            </button>
+
+                        </div>
+
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

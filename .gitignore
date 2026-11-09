@@ -1,0 +1,25 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+client/.env.local
+client/.env.*.local
+
+# Dependencies
+node_modules/
+client/node_modules/
+
+# Build artifacts
+dist/
+
+# Uploaded resumes and private files
+uploads/
+temp_sent_emails.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db

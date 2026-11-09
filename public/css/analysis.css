@@ -1,0 +1,571 @@
+/* ===========================================
+   AI Resume Analysis
+=========================================== */
+
+body{
+    background:#f5f7fb;
+    font-family:'Segoe UI',sans-serif;
+}
+
+/* ===========================================
+   Dashboard Header
+=========================================== */
+
+.dashboard-header{
+    margin-bottom:40px;
+}
+
+.dashboard-header h2,
+.dashboard-header h1{
+    font-weight:700;
+    color:#212529;
+}
+
+.dashboard-header p{
+    color:#6c757d;
+    margin-bottom:0;
+}
+
+/* ===========================================
+   Analysis Cards
+=========================================== */
+
+.analysis-card{
+
+    background:#fff;
+
+    border:none;
+
+    border-radius:18px;
+
+    padding:25px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+
+    transition:.3s;
+
+    height:100%;
+
+}
+
+.analysis-card:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:0 15px 35px rgba(0,0,0,.12);
+
+}
+
+.analysis-card h3,
+.analysis-card h4{
+
+    font-weight:700;
+
+}
+
+.analysis-card hr{
+
+    margin:15px 0;
+
+}
+
+/* ===========================================
+   ATS Score
+=========================================== */
+
+.ats-card{
+
+    text-align:center;
+
+}
+
+.circle-wrapper{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    margin:25px 0;
+
+}
+
+.circle{
+
+    width:170px;
+
+    height:170px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    position:relative;
+
+    background:conic-gradient(#0d6efd 82%,#e9ecef 0);
+
+}
+
+.circle::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:135px;
+
+    height:135px;
+
+    border-radius:50%;
+
+    background:white;
+
+}
+
+.circle span{
+
+    position:relative;
+
+    z-index:2;
+
+    font-size:2.8rem;
+
+    font-weight:700;
+
+    color:#0d6efd;
+
+}
+
+/* ===========================================
+   Statistics Cards
+=========================================== */
+
+.stat-card{
+
+    background:white;
+
+    border-radius:16px;
+
+    padding:25px;
+
+    text-align:center;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+    transition:.3s;
+
+    height:100%;
+
+}
+
+.stat-card:hover{
+
+    transform:translateY(-6px);
+
+}
+
+.stat-card i{
+
+    font-size:2rem;
+
+}
+
+.stat-card h2{
+
+    font-size:2.2rem;
+
+    margin:12px 0;
+
+    font-weight:700;
+
+}
+
+.stat-card p{
+
+    margin:0;
+
+    color:#6c757d;
+
+}
+
+/* ===========================================
+   Skills Chips
+=========================================== */
+
+.skill-chip{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:8px 15px;
+
+    margin:6px;
+
+    border-radius:30px;
+
+    background:#0d6efd;
+
+    color:white;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    transition:.3s;
+
+    max-width:220px;
+
+    white-space:normal;
+
+    word-break:break-word;
+
+    text-align:center;
+
+}
+
+.skill-chip:hover{
+
+    background:#0b5ed7;
+
+    transform:translateY(-2px);
+
+}
+
+.missing-chip{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:8px 15px;
+
+    margin:6px;
+
+    border-radius:30px;
+
+    background:#dc3545;
+
+    color:white;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    transition:.3s;
+
+    max-width:240px;
+
+    white-space:normal;
+
+    word-break:break-word;
+
+    text-align:center;
+
+}
+
+.missing-chip:hover{
+
+    background:#bb2d3b;
+
+    transform:translateY(-2px);
+
+}
+
+/* ===========================================
+   Strengths & Weaknesses
+=========================================== */
+
+.strength-item{
+
+    background:#edf9f1;
+
+    border-left:5px solid #198754;
+
+    border-radius:10px;
+
+    padding:12px 15px;
+
+    margin-bottom:12px;
+
+}
+
+.weakness-item{
+
+    background:#fff4f4;
+
+    border-left:5px solid #dc3545;
+
+    border-radius:10px;
+
+    padding:12px 15px;
+
+    margin-bottom:12px;
+
+}
+
+/* ===========================================
+   Job Cards
+=========================================== */
+
+.job-card{
+
+    background:white;
+
+    border-radius:15px;
+
+    border:1px solid #e9ecef;
+
+    padding:20px;
+
+    transition:.3s;
+
+    height:100%;
+
+    text-align:center;
+
+}
+
+.job-card:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:0 10px 25px rgba(0,0,0,.12);
+
+}
+
+.job-card i{
+
+    font-size:2rem;
+
+    color:#0d6efd;
+
+    margin-bottom:12px;
+
+}
+
+.job-card h5{
+
+    font-weight:700;
+
+}
+
+.job-card p{
+
+    color:#6c757d;
+
+    font-size:14px;
+
+}
+
+/* ===========================================
+   AI Feedback
+=========================================== */
+
+.feedback-box{
+
+    background:#eef7ff;
+
+    border-left:5px solid #0d6efd;
+
+    border-radius:12px;
+
+    padding:18px;
+
+    color:#444;
+
+    line-height:1.8;
+
+}
+
+/* ===========================================
+   Progress
+=========================================== */
+
+.progress{
+
+    height:10px;
+
+    border-radius:20px;
+
+    background:#e9ecef;
+
+}
+
+.progress-bar{
+
+    border-radius:20px;
+
+}
+
+/* ===========================================
+   Buttons
+=========================================== */
+
+.btn{
+
+    border-radius:10px;
+
+    font-weight:600;
+
+    padding:10px 18px;
+
+    transition:.3s;
+
+}
+
+.btn:hover{
+
+    transform:translateY(-2px);
+
+}
+
+/* ===========================================
+   Badge
+=========================================== */
+
+.badge{
+
+    border-radius:25px;
+
+    padding:8px 16px;
+
+    font-size:.85rem;
+
+}
+
+/* ===========================================
+   Lists
+=========================================== */
+
+.analysis-card ul{
+
+    padding-left:20px;
+
+}
+
+.analysis-card li{
+
+    margin-bottom:12px;
+
+    line-height:1.6;
+
+}
+
+/* ===========================================
+   Animation
+=========================================== */
+
+.analysis-card,
+.stat-card,
+.job-card{
+
+    animation:fadeUp .6s ease;
+
+}
+
+@keyframes fadeUp{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(20px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+/* ===========================================
+   Responsive
+=========================================== */
+
+@media(max-width:992px){
+
+    .circle{
+
+        width:150px;
+
+        height:150px;
+
+    }
+
+    .circle::before{
+
+        width:120px;
+
+        height:120px;
+
+    }
+
+    .circle span{
+
+        font-size:2.2rem;
+
+    }
+
+}
+
+@media(max-width:768px){
+
+    .analysis-card{
+
+        padding:20px;
+
+    }
+
+    .stat-card{
+
+        margin-bottom:15px;
+
+    }
+
+    .circle{
+
+        width:130px;
+
+        height:130px;
+
+    }
+
+    .circle::before{
+
+        width:100px;
+
+        height:100px;
+
+    }
+
+    .circle span{
+
+        font-size:2rem;
+
+    }
+
+    .skill-chip,
+    .missing-chip{
+
+        font-size:13px;
+
+        padding:7px 12px;
+
+    }
+
+}

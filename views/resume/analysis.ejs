@@ -1,0 +1,499 @@
+<% layout("layouts/boilerplate") %>
+
+<link rel="stylesheet" href="/css/analysis.css">
+
+<div class="container py-5">
+
+    <!-- Header -->
+    <div class="dashboard-header d-flex justify-content-between align-items-center mb-5">
+
+        <div>
+
+            <h1 class="fw-bold">
+                <i class="bi bi-stars text-primary"></i>
+                AI Resume Analysis
+            </h1>
+
+            <p class="text-muted">
+                AI-powered insights for your resume.
+            </p>
+
+        </div>
+
+        <div class="text-end">
+
+            <span class="badge bg-primary p-3">
+
+                Last Scan
+
+                <br>
+
+                <%= new Date(resume.updatedAt).toLocaleString() %>
+
+            </span>
+
+        </div>
+
+    </div>
+
+    <!-- ATS + Summary -->
+
+    <div class="row g-4">
+
+        <div class="col-lg-4">
+
+            <div class="analysis-card ats-card">
+
+                <h3>
+
+                    ATS Score
+
+                </h3>
+
+                <div class="circle-wrapper">
+
+                    <div
+                        class="circle"
+                        style="background:conic-gradient(#0d6efd <%= resume.atsScore %>%,#e9ecef 0);">
+
+                        <span>
+
+                            <%= resume.atsScore %>%
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <% if(resume.atsScore>=85){ %>
+
+                    <span class="badge bg-success">
+
+                        Excellent
+
+                    </span>
+
+                <% }else if(resume.atsScore>=70){ %>
+
+                    <span class="badge bg-primary">
+
+                        Good
+
+                    </span>
+
+                <% }else if(resume.atsScore>=50){ %>
+
+                    <span class="badge bg-warning text-dark">
+
+                        Average
+
+                    </span>
+
+                <% }else{ %>
+
+                    <span class="badge bg-danger">
+
+                        Needs Improvement
+
+                    </span>
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-8">
+
+            <div class="analysis-card">
+
+                <h3>
+
+                    <i class="bi bi-file-earmark-text"></i>
+
+                    Professional Summary
+
+                </h3>
+
+                <hr>
+
+                <p>
+
+                    <%= resume.summary || "No summary available." %>
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Statistics -->
+
+    <div class="row mt-4 g-4">
+
+        <div class="col-md-3">
+
+            <div class="stat-card">
+
+                <i class="bi bi-lightning-charge-fill text-primary"></i>
+
+                <h2>
+
+                    <%= resume.extractedSkills.length %>
+
+                </h2>
+
+                <p>
+
+                    Skills Found
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="stat-card">
+
+                <i class="bi bi-exclamation-circle-fill text-danger"></i>
+
+                <h2>
+
+                    <%= resume.missingSkills.length %>
+
+                </h2>
+
+                <p>
+
+                    Missing Skills
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="stat-card">
+
+                <i class="bi bi-briefcase-fill text-success"></i>
+
+                <h2>
+
+                    <%= resume.recommendedJobs.length %>
+
+                </h2>
+
+                <p>
+
+                    Recommended Jobs
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="stat-card">
+
+                <i class="bi bi-award-fill text-warning"></i>
+
+                <h2>
+
+                    <%= resume.strengths.length %>
+
+                </h2>
+
+                <p>
+
+                    Strengths
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Skills -->
+
+    <div class="row mt-4">
+
+        <div class="col-lg-6 mb-4">
+
+            <div class="analysis-card">
+
+                <h3 class="text-success">
+
+                    <i class="bi bi-check-circle-fill"></i>
+
+                    Skills Found
+
+                </h3>
+
+                <hr>
+
+                <% if(resume.extractedSkills.length){ %>
+
+                    <% resume.extractedSkills.forEach(skill=>{ %>
+
+                        <span
+                            class="skill-chip"
+                            title="<%= skill %>">
+
+                            <%= skill.length>20 ? skill.substring(0,20)+"..." : skill %>
+
+                        </span>
+
+                    <% }) %>
+
+                <% }else{ %>
+
+                    <p class="text-muted">
+
+                        No skills found.
+
+                    </p>
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-6 mb-4">
+
+            <div class="analysis-card">
+
+                <h3 class="text-danger">
+
+                    <i class="bi bi-exclamation-circle-fill"></i>
+
+                    Missing Skills
+
+                </h3>
+
+                <hr>
+
+                <% if(resume.missingSkills.length){ %>
+
+                    <% resume.missingSkills.forEach(skill=>{ %>
+
+                        <span
+                            class="missing-chip"
+                            title="<%= skill %>">
+
+                            <%= skill.length>22 ? skill.substring(0,22)+"..." : skill %>
+
+                        </span>
+
+                    <% }) %>
+
+                <% }else{ %>
+
+                    <p class="text-success">
+
+                        No missing skills.
+
+                    </p>
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Strengths & Weaknesses -->
+
+    <div class="row">
+
+        <div class="col-lg-6 mb-4">
+
+            <div class="analysis-card">
+
+                <h3 class="text-success">
+
+                    💪 Strengths
+
+                </h3>
+
+                <hr>
+
+                <% if(resume.strengths.length){ %>
+
+                    <% resume.strengths.forEach(item=>{ %>
+
+                        <div class="strength-item">
+
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+
+                            <%= item %>
+
+                        </div>
+
+                    <% }) %>
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-6 mb-4">
+
+            <div class="analysis-card">
+
+                <h3 class="text-danger">
+
+                    ⚠ Weaknesses
+
+                </h3>
+
+                <hr>
+
+                <% if(resume.weaknesses.length){ %>
+
+                    <% resume.weaknesses.forEach(item=>{ %>
+
+                        <div class="weakness-item">
+
+                            <i class="bi bi-x-circle-fill text-danger me-2"></i>
+
+                            <%= item %>
+
+                        </div>
+
+                    <% }) %>
+
+                <% } %>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Recommended Jobs -->
+
+    <div class="analysis-card mb-4">
+
+        <h3>
+
+            💼 Recommended Jobs
+
+        </h3>
+
+        <hr>
+
+        <% if(resume.recommendedJobs.length){ %>
+
+            <div class="row">
+
+                <% resume.recommendedJobs.forEach(job=>{ %>
+
+                    <div class="col-lg-4 mb-3">
+
+                        <div class="job-card">
+
+                            <i class="bi bi-briefcase-fill"></i>
+
+                            <h5>
+
+                                <%= job.length>35 ? job.substring(0,35)+"..." : job %>
+
+                            </h5>
+
+                            <p>
+
+                                AI Recommended
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                <% }) %>
+
+            </div>
+
+        <% }else{ %>
+
+            <p class="text-muted">
+
+                No jobs available.
+
+            </p>
+
+        <% } %>
+
+    </div>
+
+    <!-- AI Feedback -->
+
+    <div class="analysis-card">
+
+        <h3>
+
+            🤖 AI Suggestions
+
+        </h3>
+
+        <hr>
+
+        <div class="feedback-box">
+
+            <%= resume.aiFeedback %>
+
+        </div>
+
+    </div>
+
+    <!-- Buttons -->
+
+    <div class="text-center mt-5">
+
+        <a
+            href="/resume/upload"
+            class="btn btn-primary me-2">
+
+            <i class="bi bi-upload"></i>
+
+            Upload New Resume
+
+        </a>
+
+        <a
+            href="/resume/analysis"
+            class="btn btn-success me-2">
+
+            <i class="bi bi-arrow-repeat"></i>
+
+            Analyze Again
+
+        </a>
+
+        <button
+            onclick="window.print()"
+            class="btn btn-outline-secondary">
+
+            <i class="bi bi-download"></i>
+
+            Download Report
+
+        </button>
+
+    </div>
+
+</div>

@@ -1,0 +1,187 @@
+
+<% layout("layouts/boilerplate") %>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+
+            <div class="mb-4">
+                <a href="/resume/choose"
+                   class="text-decoration-none">
+                    &larr; Back to resume options
+                </a>
+
+                <h1 class="fw-bold mt-3">AI Resume Generator</h1>
+                <p class="text-muted">
+                    Enter accurate details. AI will improve the wording
+                    without inventing qualifications or achievements.
+                </p>
+            </div>
+
+            <form action="/resume/builder/ai"
+                  method="POST">
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h4>Personal Information</h4>
+                        <hr>
+
+                        <div class="mb-3">
+                            <label class="form-label">Full Name *</label>
+                            <input class="form-control"
+                                   name="fullName"
+                                   value="<%= currUser.fullName || '' %>"
+                                   required>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Email *</label>
+                                <input type="email"
+                                       class="form-control"
+                                       name="email"
+                                       value="<%= currUser.email || '' %>"
+                                       required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Phone</label>
+                                <input class="form-control"
+                                       name="phone">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Location</label>
+                                <input class="form-control"
+                                       name="location"
+                                       placeholder="City, State">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">LinkedIn URL</label>
+                                <input type="url"
+                                       class="form-control"
+                                       name="linkedin">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">GitHub URL</label>
+                                <input type="url"
+                                       class="form-control"
+                                       name="github">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h4>Target Job</h4>
+                        <hr>
+
+                        <label class="form-label">
+                            Job Role You Are Targeting *
+                        </label>
+                        <input class="form-control"
+                               name="targetRole"
+                               placeholder="e.g. Software Engineer, AI/ML Intern"
+                               required>
+
+                        <div class="form-text">
+                            AI will tailor the resume wording to this role
+                            using only the information you provide.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h4>Education</h4>
+                        <hr>
+
+                        <label class="form-label">
+                            One education entry per line
+                        </label>
+                        <textarea class="form-control"
+                                  name="education"
+                                  rows="3"
+                                  placeholder="Degree | College | Year | CGPA"></textarea>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h4>Skills</h4>
+                        <hr>
+
+                        <label class="form-label">
+                            Your actual skills
+                        </label>
+                        <textarea class="form-control"
+                                  name="skills"
+                                  rows="3"
+                                  placeholder="JavaScript, Node.js, Express, MongoDB, Python"></textarea>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h4>Projects</h4>
+                        <hr>
+
+                        <label class="form-label">
+                            One project per line
+                        </label>
+                        <textarea class="form-control"
+                                  name="projects"
+                                  rows="5"
+                                  placeholder="Project Name | Technologies | What you actually built"></textarea>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h4>Experience / Internship</h4>
+                        <hr>
+
+                        <label class="form-label">
+                            One entry per line (leave blank if none)
+                        </label>
+                        <textarea class="form-control"
+                                  name="experience"
+                                  rows="4"
+                                  placeholder="Company | Role | Duration | Actual responsibilities"></textarea>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h4>Certifications</h4>
+                        <hr>
+
+                        <label class="form-label">
+                            One certification per line
+                        </label>
+                        <textarea class="form-control"
+                                  name="certifications"
+                                  rows="3"
+                                  placeholder="Certificate Name | Issuer | Year"></textarea>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>Important:</strong>
+                    Do not enter fake experience, skills or certificates.
+                    Review your AI-generated resume before using it.
+                </div>
+
+                <button type="submit"
+                        class="btn btn-success btn-lg w-100">
+                    <i class="bi bi-stars"></i>
+                    Generate My Resume
+                </button>
+
+            </form>
+        </div>
+    </div>
+</div>

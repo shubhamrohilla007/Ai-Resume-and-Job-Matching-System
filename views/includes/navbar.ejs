@@ -1,0 +1,195 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+
+    <div class="container">
+
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold" href="/">
+            <i class="bi bi-file-earmark-person-fill"></i>
+            AI Resume System
+        </a>
+
+        <!-- Mobile Toggle -->
+        <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav">
+
+            <span class="navbar-toggler-icon"></span>
+
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+
+            <!-- Left Menu -->
+            <ul class="navbar-nav me-auto">
+
+                <% if(currUser){ %>
+
+                    <% if(currUser.role==="job_seeker"){ %>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard/jobseeker">
+                                Dashboard
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/profile">
+                                Profile
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/resume/view">
+                            <i class="bi bi-file-earmark-person"></i>
+                                Resume
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                Jobs
+                            </a>
+                        </li>
+
+                    <% } %>
+
+                    <% if(currUser.role==="recruiter"){ %>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard/recruiter">
+                                Dashboard
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                Post Job
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                Applicants
+                            </a>
+                        </li>
+
+                    <% } %>
+
+                    <% if(currUser.role==="admin"){ %>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard/admin">
+                                Dashboard
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                Users
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                Reports
+                            </a>
+                        </li>
+
+                    <% } %>
+
+                <% } %>
+
+            </ul>
+
+            <!-- Right Menu -->
+            <ul class="navbar-nav">
+
+                <% if(!currUser){ %>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            Login
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/signup">
+                            Signup
+                        </a>
+                    </li>
+
+                <% } else { %>
+
+                    <li class="nav-item dropdown">
+
+                        <a
+                            class="nav-link dropdown-toggle"
+                            href="#"
+                            role="button"
+                            data-bs-toggle="dropdown">
+
+                            <i class="bi bi-person-circle"></i>
+                            <%= currUser.fullName %>
+
+                        </a>
+
+                        <ul class="dropdown-menu dropdown-menu-end">
+
+                            <% if(currUser.role==="job_seeker"){ %>
+
+                                <li>
+                                    <a class="dropdown-item" href="/dashboard/jobseeker">
+                                        <i class="bi bi-speedometer2"></i>
+                                        Dashboard
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item" href="/profile">
+                                        <i class="bi bi-person"></i>
+                                        My Profile
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item" href="/resume/view">
+                                        <i class="bi bi-file-earmark-arrow-up"></i>
+                                        My Resume
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item" href="/resume/upload">
+                                        <i class="bi bi-file-earmark-text"></i>
+                                        Replace Resume
+                                    </a>
+                                </li>
+
+                            <% } %>
+
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item text-danger" href="/logout">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    Logout
+                                </a>
+                            </li>
+
+                        </ul>
+
+                    </li>
+
+                <% } %>
+
+            </ul>
+
+        </div>
+
+    </div>
+
+</nav>

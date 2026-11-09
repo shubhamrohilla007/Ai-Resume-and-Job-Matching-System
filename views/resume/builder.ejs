@@ -1,0 +1,1111 @@
+<% layout("layouts/boilerplate") %>
+<link rel="stylesheet" href="/css/resume-builder.css">
+
+<div class="container py-5">
+
+    <!-- Header -->
+
+    <div class="mb-4">
+
+        <h1 class="fw-bold">
+
+            <i class="bi bi-file-earmark-plus text-primary"></i>
+
+            Make Your Resume
+
+        </h1>
+
+        <p class="text-muted">
+
+            Create a professional and ATS-friendly resume.
+
+        </p>
+
+    </div>
+
+
+    <form
+        action="/resume/builder"
+        method="POST"
+    >
+
+
+        <!-- ========================= -->
+        <!-- Personal Information -->
+        <!-- ========================= -->
+
+        <div class="builder-card mb-4">
+
+            <h3>
+
+                <i class="bi bi-person text-primary"></i>
+
+                Personal Information
+
+            </h3>
+
+            <hr>
+
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Full Name
+                    </label>
+
+                    <input
+                        type="text"
+                        name="fullName"
+                        class="form-control"
+                        value="<%= resume.personal.fullName %>"
+                        placeholder="Enter your full name"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Email
+                    </label>
+
+                    <input
+                        type="email"
+                        name="email"
+                        class="form-control"
+                        value="<%= resume.personal.email %>"
+                        placeholder="example@gmail.com"
+                    >
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Phone
+                    </label>
+
+                    <input
+                        type="text"
+                        name="phone"
+                        class="form-control"
+                        value="<%= resume.personal.phone %>"
+                        placeholder="Enter phone number"
+                    >
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Location
+                    </label>
+
+                    <input
+                        type="text"
+                        name="location"
+                        class="form-control"
+                        value="<%= resume.personal.location %>"
+                        placeholder="Delhi, India"
+                    >
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        LinkedIn
+                    </label>
+
+                    <input
+                        type="text"
+                        name="linkedin"
+                        class="form-control"
+                        value="<%= resume.personal.linkedin %>"
+                        placeholder="LinkedIn profile URL"
+                    >
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        GitHub
+                    </label>
+
+                    <input
+                        type="text"
+                        name="github"
+                        class="form-control"
+                        value="<%= resume.personal.github %>"
+                        placeholder="GitHub profile URL"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ========================= -->
+        <!-- Professional Summary -->
+        <!-- ========================= -->
+
+        <div class="builder-card mb-4">
+
+            <h3>
+
+                <i class="bi bi-person-badge text-primary"></i>
+
+                Professional Summary
+
+            </h3>
+
+            <hr>
+
+
+            <textarea
+                name="summary"
+                class="form-control"
+                rows="5"
+                placeholder="Write a short professional summary..."
+            ><%= resume.summary %></textarea>
+
+        </div>
+        
+        <div class="mt-3">
+            <button
+                type="button"
+                id="improveSummaryBtn"
+                class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-stars"></i>
+                Improve Summary with AI
+            </button>
+
+            <p id="aiSummaryStatus"
+            class="small text-muted mt-2"
+            aria-live="polite"></p>
+
+            <div id="aiSummaryResult" class="mt-3" hidden>
+                <label for="improvedSummary" class="form-label">
+                    AI Suggestion
+                </label>
+
+                <textarea
+                    id="improvedSummary"
+                    class="form-control"
+                    rows="4"></textarea>
+
+                <button
+                    type="button"
+                    id="applySummaryBtn"
+                    class="btn btn-success btn-sm mt-2">
+                    Apply Suggestion
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================= -->
+        <!-- Education -->
+        <!-- ========================= -->
+
+        <div class="builder-card mb-4">
+
+            <div class="d-flex justify-content-between">
+
+                <h3>
+
+                    <i class="bi bi-mortarboard text-primary"></i>
+
+                    Education
+
+                </h3>
+
+                <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    onclick="addEducation()"
+                >
+                    + Add
+                </button>
+
+            </div>
+
+            <hr>
+
+
+            <div id="education-container">
+
+
+                <% if(resume.education.length > 0) { %>
+
+                    <% resume.education.forEach(function(item) { %>
+
+                        <div class="dynamic-item education-item">
+
+                            <div class="row g-3">
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label">
+                                        Degree
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="educationDegree"
+                                        class="form-control"
+                                        value="<%= item.degree %>"
+                                        placeholder="MCA"
+                                    >
+
+                                </div>
+
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label">
+                                        College
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="educationCollege"
+                                        class="form-control"
+                                        value="<%= item.college %>"
+                                        placeholder="College Name"
+                                    >
+
+                                </div>
+
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label">
+                                        Year
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="educationYear"
+                                        class="form-control"
+                                        value="<%= item.year %>"
+                                        placeholder="2026"
+                                    >
+
+                                </div>
+
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label">
+                                        CGPA / Percentage
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="educationCgpa"
+                                        class="form-control"
+                                        value="<%= item.cgpa %>"
+                                        placeholder="8.9 CGPA"
+                                    >
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    <% }) %>
+
+
+                <% } else { %>
+
+                    <div class="dynamic-item education-item">
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Degree
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="educationDegree"
+                                    class="form-control"
+                                    placeholder="MCA"
+                                >
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    College
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="educationCollege"
+                                    class="form-control"
+                                    placeholder="College Name"
+                                >
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Year
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="educationYear"
+                                    class="form-control"
+                                    placeholder="2026"
+                                >
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    CGPA / Percentage
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="educationCgpa"
+                                    class="form-control"
+                                    placeholder="8.9 CGPA"
+                                >
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                <% } %>
+
+
+            </div>
+
+        </div>
+
+
+        <!-- ========================= -->
+        <!-- Skills -->
+        <!-- ========================= -->
+
+        
+        <div class="mb-3">
+            <label class="form-label">
+                Technical Skills
+            </label>
+
+            <textarea
+                name="skills"
+                class="form-control"
+                rows="5"
+                placeholder="Programming Languages: Java, Python, JavaScript&#10;Frontend Development: HTML, CSS, React&#10;Backend Development: Node.js, Express.js&#10;Databases: MongoDB, SQL"
+            ><%= (resume.skills || []).join("\n") %></textarea>
+
+            <small class="text-muted">
+                Enter one category per line, e.g. Programming Languages: Java, Python.
+            </small>
+        </div>
+
+
+
+        <!-- ========================= -->
+        <!-- Experience -->
+        <!-- ========================= -->
+
+        <div class="builder-card mb-4">
+
+            <div class="d-flex justify-content-between">
+
+                <h3>
+
+                    <i class="bi bi-briefcase text-primary"></i>
+
+                    Experience
+
+                </h3>
+
+                <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    onclick="addExperience()"
+                >
+                    + Add
+                </button>
+
+            </div>
+
+            <hr>
+
+
+            
+            <div id="experience-container">
+                <% if (resume.experience && resume.experience.length > 0) { %>
+                    <% resume.experience.forEach(function(item) { %>
+                        <div class="dynamic-item mt-3">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Company</label>
+                                    <input type="text" name="experienceCompany"
+                                        class="form-control"
+                                        value="<%= item.company || '' %>">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Role</label>
+                                    <input type="text" name="experienceRole"
+                                        class="form-control"
+                                        value="<%= item.role || '' %>">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Duration</label>
+                                    <input type="text" name="experienceDuration"
+                                        class="form-control"
+                                        value="<%= item.duration || '' %>">
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label">Description</label>
+                                    <textarea name="experienceDescription"
+                                        class="form-control" rows="4"><%= item.description || '' %></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="dynamic-item mt-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Company</label>
+                                <input type="text" name="experienceCompany"
+                                    class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Role</label>
+                                <input type="text" name="experienceRole"
+                                    class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Duration</label>
+                                <input type="text" name="experienceDuration"
+                                    class="form-control">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Description</label>
+                                <textarea name="experienceDescription"
+                                    class="form-control" rows="4"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+
+        <!-- ========================= -->
+        <!-- Projects -->
+        <!-- ========================= -->
+
+        <div class="builder-card mb-4">
+
+            <div class="d-flex justify-content-between">
+
+                <h3>
+
+                    <i class="bi bi-code-square text-primary"></i>
+
+                    Projects
+
+                </h3>
+
+                <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    onclick="addProject()"
+                >
+                    + Add
+                </button>
+
+            </div>
+
+            <hr>
+
+
+            
+            <div id="project-container">
+                <% if (resume.projects && resume.projects.length > 0) { %>
+                    <% resume.projects.forEach(function(item) { %>
+                        <div class="dynamic-item mt-3">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Project Name</label>
+                                    <input type="text" name="projectName"
+                                        class="form-control"
+                                        value="<%= item.name || '' %>">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Technologies</label>
+                                    <input type="text" name="projectTechnologies"
+                                        class="form-control"
+                                        value="<%= item.technologies || '' %>">
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label">Description / Bullet Points</label>
+                                    <textarea name="projectDescription"
+                                        class="form-control" rows="5"><%= item.description || '' %></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="dynamic-item mt-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Project Name</label>
+                                <input type="text" name="projectName"
+                                    class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Technologies</label>
+                                <input type="text" name="projectTechnologies"
+                                    class="form-control">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Description / Bullet Points</label>
+                                <textarea name="projectDescription"
+                                    class="form-control" rows="5"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+
+        <!-- ========================= -->
+        <!-- Certifications -->
+        <!-- ========================= -->
+
+        <div class="builder-card mb-4">
+
+            <div class="d-flex justify-content-between">
+
+                <h3>
+
+                    <i class="bi bi-award text-primary"></i>
+
+                    Certifications
+
+                </h3>
+
+                <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    onclick="addCertification()"
+                >
+                    + Add
+                </button>
+
+            </div>
+
+            <hr>
+
+
+            
+            <div id="certification-container">
+                <% if (resume.certifications && resume.certifications.length > 0) { %>
+                    <% resume.certifications.forEach(function(item) { %>
+                        <div class="dynamic-item mt-3">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Certification</label>
+                                    <input type="text" name="certificationName"
+                                        class="form-control"
+                                        value="<%= item.name || '' %>">
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label">Issuer</label>
+                                    <input type="text" name="certificationIssuer"
+                                        class="form-control"
+                                        value="<%= item.issuer || '' %>">
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label">Year</label>
+                                    <input type="text" name="certificationYear"
+                                        class="form-control"
+                                        value="<%= item.year || '' %>">
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="dynamic-item mt-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Certification</label>
+                                <input type="text" name="certificationName"
+                                    class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Issuer</label>
+                                <input type="text" name="certificationIssuer"
+                                    class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Year</label>
+                                <input type="text" name="certificationYear"
+                                    class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+
+        <!-- ========================= -->
+        <!-- Submit -->
+        <!-- ========================= -->
+
+        <div class="text-center mb-5">
+
+            <button
+                type="submit"
+                class="btn btn-primary btn-lg px-5"
+            >
+
+                <i class="bi bi-file-earmark-check"></i>
+
+                Save & Preview Resume
+
+            </button>
+
+        </div>
+
+
+    </form>
+
+</div>
+
+
+<script>
+
+function addEducation() {
+
+    const container =
+        document.getElementById("education-container");
+
+    const div =
+        document.createElement("div");
+
+    div.className =
+        "dynamic-item education-item mt-3";
+
+    div.innerHTML = `
+
+        <div class="row g-3">
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Degree
+                </label>
+
+                <input
+                    type="text"
+                    name="educationDegree"
+                    class="form-control"
+                    placeholder="Degree"
+                >
+
+            </div>
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    College
+                </label>
+
+                <input
+                    type="text"
+                    name="educationCollege"
+                    class="form-control"
+                    placeholder="College"
+                >
+
+            </div>
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Year
+                </label>
+
+                <input
+                    type="text"
+                    name="educationYear"
+                    class="form-control"
+                    placeholder="2026"
+                >
+
+            </div>
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    CGPA / Percentage
+                </label>
+
+                <input
+                    type="text"
+                    name="educationCgpa"
+                    class="form-control"
+                    placeholder="8.5"
+                >
+
+            </div>
+
+        </div>
+
+    `;
+
+    container.appendChild(div);
+}
+
+
+function addExperience() {
+
+    const container =
+        document.getElementById("experience-container");
+
+    const div =
+        document.createElement("div");
+
+    div.className =
+        "dynamic-item mt-3";
+
+    div.innerHTML = `
+
+        <div class="row g-3">
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Company
+                </label>
+
+                <input
+                    type="text"
+                    name="experienceCompany"
+                    class="form-control"
+                    placeholder="Company"
+                >
+
+            </div>
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Role
+                </label>
+
+                <input
+                    type="text"
+                    name="experienceRole"
+                    class="form-control"
+                    placeholder="Role"
+                >
+
+            </div>
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Duration
+                </label>
+
+                <input
+                    type="text"
+                    name="experienceDuration"
+                    class="form-control"
+                    placeholder="2025 - 2026"
+                >
+
+            </div>
+
+            <div class="col-12">
+
+                <label class="form-label">
+                    Description
+                </label>
+
+                <textarea
+                    name="experienceDescription"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Describe your work..."
+                ></textarea>
+
+            </div>
+
+        </div>
+
+    `;
+
+    container.appendChild(div);
+}
+
+
+function addProject() {
+
+    const container =
+        document.getElementById("project-container");
+
+    const div =
+        document.createElement("div");
+
+    div.className =
+        "dynamic-item mt-3";
+
+    div.innerHTML = `
+
+        <div class="row g-3">
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Project Name
+                </label>
+
+                <input
+                    type="text"
+                    name="projectName"
+                    class="form-control"
+                    placeholder="Project Name"
+                >
+
+            </div>
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Technologies
+                </label>
+
+                <input
+                    type="text"
+                    name="projectTechnologies"
+                    class="form-control"
+                    placeholder="Technologies"
+                >
+
+            </div>
+
+            <div class="col-12">
+
+                <label class="form-label">
+                    Description
+                </label>
+
+                <textarea
+                    name="projectDescription"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Describe your project..."
+                ></textarea>
+
+            </div>
+
+        </div>
+
+    `;
+
+    container.appendChild(div);
+}
+
+
+function addCertification() {
+
+    const container =
+        document.getElementById("certification-container");
+
+    const div =
+        document.createElement("div");
+
+    div.className =
+        "dynamic-item mt-3";
+
+    div.innerHTML = `
+
+        <div class="row g-3">
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Certification
+                </label>
+
+                <input
+                    type="text"
+                    name="certificationName"
+                    class="form-control"
+                    placeholder="Certification"
+                >
+
+            </div>
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Issuer
+                </label>
+
+                <input
+                    type="text"
+                    name="certificationIssuer"
+                    class="form-control"
+                    placeholder="Issuer"
+                >
+
+            </div>
+
+            <div class="col-md-3">
+
+                <label class="form-label">
+                    Year
+                </label>
+
+                <input
+                    type="text"
+                    name="certificationYear"
+                    class="form-control"
+                    placeholder="2026"
+                >
+
+            </div>
+
+        </div>
+
+    `;
+
+    container.appendChild(div);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const summaryField =
+        document.querySelector('[name="summary"]');
+
+    const improveButton =
+        document.getElementById("improveSummaryBtn");
+
+    const status =
+        document.getElementById("aiSummaryStatus");
+
+    const resultBox =
+        document.getElementById("aiSummaryResult");
+
+    const improvedField =
+        document.getElementById("improvedSummary");
+
+    const applyButton =
+        document.getElementById("applySummaryBtn");
+
+    if (
+        !summaryField ||
+        !improveButton ||
+        !status ||
+        !resultBox ||
+        !improvedField ||
+        !applyButton
+    ) {
+        return;
+    }
+
+    improveButton.addEventListener("click", async () => {
+        const originalText = summaryField.value.trim();
+
+        if (!originalText) {
+            status.textContent =
+                "Please enter your professional summary first.";
+            return;
+        }
+
+        improveButton.disabled = true;
+        status.textContent = "Gemini is improving your summary...";
+        resultBox.hidden = true;
+
+        try {
+            const response = await fetch(
+                "/resume/builder/ai-improve",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({
+                        section: "summary",
+                        text: originalText
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.message || "AI improvement failed."
+                );
+            }
+
+            improvedField.value = data.improvedText;
+            resultBox.hidden = false;
+
+            status.textContent =
+                "Suggestion ready. Review it before applying.";
+
+        } catch (error) {
+            status.textContent =
+                error.message ||
+                "Unable to improve the summary. Please try again.";
+        } finally {
+            improveButton.disabled = false;
+        }
+    });
+
+    applyButton.addEventListener("click", () => {
+        summaryField.value = improvedField.value;
+        status.textContent =
+            "Suggestion applied. Click Save & Preview Resume to save it.";
+    });
+});
+</script>

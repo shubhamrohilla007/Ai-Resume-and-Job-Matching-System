@@ -1,0 +1,131 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-8 col-md-10">
+
+            <div class="card shadow-lg border-0 rounded-4">
+
+                <div class="card-body p-5">
+
+                    <h2 class="text-center fw-bold mb-2">
+                        Complete Your Profile
+                    </h2>
+
+                    <p class="text-center text-muted mb-4">
+                        Tell us about yourself to get better job recommendations.
+                    </p>
+
+                    <form action="/profile/edit" method="POST">
+
+                        <!-- Full Name -->
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                name="fullName"
+                                placeholder="Enter your full name"
+                                value = "<%= currUser.fullName%>"
+                                required>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number</label>
+                            <input
+                                type="tel"
+                                class="form-control"
+                                name="phone"
+                                value="<%= profile.phone %>"
+                                placeholder="+91 XXXXXXXXXX">
+                        </div>
+
+                        <!-- Education -->
+                        <div class="mb-3">
+                            <label class="form-label">Education</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                name="education"
+                                value="<%= profile.education %>"
+                                placeholder="MCA ">
+                        </div>
+
+                        <!-- Experience -->
+                        <div class="mb-3">
+                            <label class="form-label">Experience</label>
+                            <textarea
+                                class="form-control"
+                                name="experience"
+                                rows="4"
+                                placeholder="Describe your experience..."></textarea>
+                        </div>
+
+                        <!-- Skills -->
+                        <div class="mb-3">
+                            <label class="form-label">Skills</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                name="skills"
+                                value="<%= profile.skills.join(', ') %>"
+                                placeholder="HTML, CSS, JavaScript, React, Node.js">
+                            <div class="form-text">
+                                Separate each skill with a comma.
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                name="location"
+                                value="<%= profile.education %>" 
+                                placeholder="Delhi, India">
+                        </div>
+
+                        <!-- LinkedIn -->
+                        <div class="mb-3">
+                            <label class="form-label">LinkedIn Profile</label>
+                            <input
+                                type="url"
+                                class="form-control"
+                                name="linkedin"
+                                placeholder="https://linkedin.com/in/yourprofile">
+                        </div>
+
+                        <!-- GitHub -->
+                        <div class="mb-4">
+                            <label class="form-label">GitHub Profile</label>
+                            <input
+                                type="url"
+                                class="form-control"
+                                name="github"
+                                placeholder="https://github.com/yourusername">
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button
+                                type="submit"
+                                class="btn btn-primary btn-lg">
+                                Edit Profile
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

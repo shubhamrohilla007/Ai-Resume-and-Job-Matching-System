@@ -1,0 +1,246 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="container py-5">
+    <div class="mb-4">
+        <h2 class="fw-bold">Recommended Jobs</h2>
+        <p class="text-muted">
+            Jobs ranked using your resume skills, project evidence and AI-assisted semantic matching.
+        </p>
+    </div>
+
+    <% if (!hasResumeSkills) { %>
+        <div class="alert alert-warning">
+            Your resume does not contain any saved skills yet.
+            Add your skills in the Resume Builder to get useful matches.
+            <a href="/resume/builder" class="alert-link">Update resume</a>
+        </div>
+    <% } %>
+
+    <% if (recommendations.length === 0) { %>
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-briefcase display-4 text-muted"></i>
+                <h4 class="mt-3">No jobs available yet</h4>
+                <p class="text-muted">
+                    Active jobs will appear here when they are added to the database.
+                </p>
+            </div>
+        </div>
+    <% } %>
+
+    <div class="row g-4">
+        <% recommendations.forEach((job) => { %>
+            <div class="col-lg-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body p-4">
+
+                        <!-- Job title and match score -->
+                        <div class="d-flex justify-content-between gap-3">
+                            <div>
+                                <h4 class="fw-bold mb-1">
+                                    <%= job.title %>
+                                </h4>
+                                <p class="text-muted mb-2">
+                                    <%= job.company %>
+                                </p>
+                            </div>
+
+                            <div class="text-end">
+                                <% if (job.matchScore !== null &&
+                                       job.matchScore !== undefined) { %>
+                                    <h3 class="fw-bold text-primary mb-0">
+                                        <%= job.matchScore %>%
+                                    </h3>
+                                    <small class="text-muted">Match score</small>
+                                <% } else { %>
+                                    <span class="badge text-bg-secondary">
+                                        Score unavailable
+                                    </span>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Job details -->
+                        <p class="small text-muted mb-3">
+                            <i class="bi bi-geo-alt"></i>
+                            <%= job.location || "Not specified" %>
+                            <span class="mx-2">|</span>
+                            <%= job.jobType || "Not specified" %>
+                            <span class="mx-2">|</span>
+                            <%= job.experienceLevel || "Not specified" %>
+                        </p>
+
+                        <!-- AI-assisted explanation -->
+                        <% if (
+                            job.matchingMode === "hybrid" ||
+                            job.matchingMode === "ai-assisted"
+                        ) { %>
+                            <div class="alert alert-info mt-3 mb-3">
+                                <strong>
+                                    <i class="bi bi-robot"></i>
+                                    AI-assisted analysis
+                                </strong>
+
+                                <% if (job.aiExplanation) { %>
+                                    <p class="mb-0 mt-2">
+                                        <%= job.aiExplanation %>
+                                    </p>
+                                <% } %>
+
+                                <% if (job.aiScore !== null &&
+                                       job.aiScore !== undefined) { %>
+                                    <small class="d-block mt-2">
+                                        Semantic relevance score:
+                                        <strong><%= job.aiScore %>%</strong>
+                                    </small>
+                                <% } %>
+                            </div>
+                        <% } else if (
+                            job.matchingMode === "rule-based-fallback"
+                        ) { %>
+                            <div class="alert alert-secondary mt-3 mb-3">
+                                <strong>Rule-based matching</strong>
+                                <p class="mb-0 mt-1">
+                                    AI analysis is temporarily unavailable.
+                                    This result uses your resume skills and project evidence.
+                                </p>
+                            </div>
+                        <% } %>
+
+                        <!-- Required skill status -->
+                        <% if (!job.hasRequiredSkillData) { %>
+                            <div class="alert alert-secondary py-2">
+                                Required skills are not configured for this job.
+                                The rule-based score may be unavailable.
+                            </div>
+                        <% } else if (job.mandatoryRequirementsMet) { %>
+                            <div class="alert alert-success py-2">
+                                All listed required skills are present in your resume.
+                            </div>
+                        <% } else { %>
+                            <div class="alert alert-warning py-2">
+                                Missing <%= job.missingRequired.length %>
+                                listed required skill(s).
+                                Your resume may not meet all job requirements.
+                            </div>
+                        <% } %>
+
+                        <!-- Matching required skills -->
+                        <h6 class="fw-bold">Matching required skills</h6>
+
+                        <% if (job.matchedRequired.length) { %>
+                            <% job.matchedRequired.forEach((skill) => { %>
+                                <span class="badge text-bg-success me-1 mb-1">
+                                    <%= skill %>
+                                </span>
+                            <% }) %>
+                        <% } else { %>
+                            <p class="text-muted small">
+                                No required skills matched exactly.
+                            </p>
+                        <% } %>
+
+                        <!-- Missing required skills -->
+                        <% if (job.missingRequired.length) { %>
+                            <h6 class="fw-bold mt-3">
+                                Missing required skills
+                            </h6>
+
+                            <% job.missingRequired.forEach((skill) => { %>
+                                <span class="badge text-bg-danger me-1 mb-1">
+                                    <%= skill %>
+                                </span>
+                            <% }) %>
+                        <% } %>
+
+                        <!-- Matching preferred skills -->
+                        <% if (job.matchedPreferred.length) { %>
+                            <h6 class="fw-bold mt-3">
+                                Matching preferred skills
+                            </h6>
+
+                            <% job.matchedPreferred.forEach((skill) => { %>
+                                <span class="badge text-bg-info me-1 mb-1">
+                                    <%= skill %>
+                                </span>
+                            <% }) %>
+                        <% } %>
+
+                        <!-- Preferred skills to develop -->
+                        <% if (job.missingPreferred.length) { %>
+                            <h6 class="fw-bold mt-3">
+                                Preferred skills to develop
+                            </h6>
+
+                            <% job.missingPreferred.forEach((skill) => { %>
+                                <span class="badge text-bg-secondary me-1 mb-1">
+                                    <%= skill %>
+                                </span>
+                            <% }) %>
+                        <% } %>
+
+                        <!-- Project evidence -->
+                        <% if (job.projectMatches.length) { %>
+                            <p class="small text-muted mt-3 mb-0">
+                                <i class="bi bi-code-slash"></i>
+                                Project evidence mentions:
+                                <%= job.projectMatches.join(", ") %>
+                            </p>
+                        <% } %>
+
+                        <!-- AI-related skills supported by resume evidence -->
+                        <% if (
+                            Array.isArray(job.aiRelatedSkills) &&
+                            job.aiRelatedSkills.length
+                        ) { %>
+                            <h6 class="fw-bold mt-3">
+                                Related skills found in your resume
+                            </h6>
+
+                            <ul class="small mb-3">
+                                <% job.aiRelatedSkills.forEach((item) => { %>
+                                    <li class="mb-2">
+                                        <strong><%= item.jobSkill %></strong>
+
+                                        <div class="text-muted">
+                                            Resume evidence:
+                                            <%= item.resumeEvidence %>
+                                        </div>
+                                    </li>
+                                <% }) %>
+                            </ul>
+                        <% } %>
+
+                        <!-- Application action -->
+                        <div class="mt-4">
+                            <% if (job.applicationUrl) { %>
+                                <a
+                                    href="<%= job.applicationUrl %>"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="btn btn-primary w-100"
+                                >
+                                    View Application
+                                    <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                </a>
+                            <% } else { %>
+                                <button
+                                    class="btn btn-outline-secondary w-100"
+                                    disabled
+                                >
+                                    Application link unavailable
+                                </button>
+                            <% } %>
+                        </div>
+
+                        <p class="text-muted small mt-3 mb-0">
+                            Match score indicates estimated resume-job relevance,
+                            not a guarantee of selection or hiring.
+                        </p>
+
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>

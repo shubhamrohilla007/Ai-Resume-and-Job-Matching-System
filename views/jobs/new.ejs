@@ -1,0 +1,113 @@
+
+<% layout("layouts/boilerplate") %>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <h2 class="fw-bold">Post a Job</h2>
+                    <p class="text-muted">
+                        Add clear requirements so candidates can find relevant opportunities.
+                    </p>
+
+                    <form action="/recruiter/jobs" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Job Title *</label>
+                            <input class="form-control" name="title"
+                                value="<%= job?.title || '' %>" required maxlength="150">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Company *</label>
+                            <input class="form-control" name="company"
+                                value="<%= job?.company || '' %>" required maxlength="150">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Job Description *</label>
+                            <textarea class="form-control" name="description"
+                                rows="5" required maxlength="15000"><%= job?.description || '' %></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Required Skills *</label>
+                            <textarea class="form-control" name="requiredSkills"
+                                rows="2" required placeholder="Python, SQL, Git"><%= (job?.requiredSkills || []).join(', ') %></textarea>
+                            <div class="form-text">
+                                Enter comma-separated skills required for the role.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Preferred Skills</label>
+                            <textarea class="form-control" name="preferredSkills"
+                                rows="2" placeholder="Docker, AWS"><%= (job?.preferredSkills || []).join(', ') %></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Experience Level</label>
+                                <select class="form-select" name="experienceLevel" required>
+                                    <% const levels = ["Fresher", "Entry Level", "Mid Level", "Senior Level"]; %>
+                                    <% levels.forEach(level => { %>
+                                        <option value="<%= level %>"
+                                            <%= (job?.experienceLevel || "Fresher") === level ? "selected" : "" %>>
+                                            <%= level %>
+                                        </option>
+                                    <% }) %>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Job Type</label>
+                                <select class="form-select" name="jobType" required>
+                                    <% const types = ["Full-time", "Part-time", "Internship", "Contract"]; %>
+                                    <% types.forEach(type => { %>
+                                        <option value="<%= type %>"
+                                            <%= (job?.jobType || "Full-time") === type ? "selected" : "" %>>
+                                            <%= type %>
+                                        </option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Location</label>
+                                <input class="form-control" name="location"
+                                    value="<%= job?.location || 'Remote' %>"
+                                    placeholder="Delhi / Remote">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Salary</label>
+                                <input class="form-control" name="salary"
+                                    value="<%= job?.salary || '' %>"
+                                    placeholder="e.g. ₹3–5 LPA">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Application URL</label>
+                            <input class="form-control" type="url" name="applicationUrl"
+                                value="<%= job?.applicationUrl || '' %>"
+                                placeholder="https://example.com/apply">
+                        </div>
+
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-send"></i> Publish Job
+                            </button>
+
+                            <a href="/recruiter/jobs" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

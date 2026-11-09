@@ -1,0 +1,132 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-10">
+
+            <div class="card profile-card shadow ">
+
+                <div class="card-body p-5">
+
+                    <!-- Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+
+                        <div>
+                            <h2 class="fw-bold mb-1">
+                                <i class="bi bi-person-circle text-primary"></i>
+                                My Profile
+                            </h2>
+
+                            <p class="text-muted mb-0">
+                                Manage your personal information
+                            </p>
+                        </div>
+
+                        <a href="/profile/edit" class="btn btn-primary">
+                            <i class="bi bi-pencil-square"></i>
+                            Edit Profile
+                        </a>
+
+                    </div>
+
+                    <hr>
+
+                    <!-- Profile Details -->
+
+                    <div class="row gy-4 mt-2">
+
+                        <div class="col-md-6">
+                            <h6 class="text-secondary">Full Name</h6>
+                            <p class="fw-semibold"><%= profile.fullName %></p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="text-secondary">Phone</h6>
+                            <p class="fw-semibold"><%= profile.phone || "Not Added" %></p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="text-secondary">Education</h6>
+                            <p class="fw-semibold"><%= profile.education || "Not Added" %></p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="text-secondary">Location</h6>
+                            <p class="fw-semibold"><%= profile.location || "Not Added" %></p>
+                        </div>
+
+                        <div class="col-12">
+                            <h6 class="text-secondary">Experience</h6>
+                            <p class="fw-semibold">
+                                <%= profile.experience || "Not Added" %>
+                            </p>
+                        </div>
+
+                        <div class="col-12">
+                            <h6 class="text-secondary">Skills</h6>
+
+                            <% if(profile.skills.length){ %>
+
+                                <% profile.skills.forEach(skill => { %>
+
+                                    <span class="badge bg-primary me-2 mb-2 p-2">
+                                        <%= skill %>
+                                    </span>
+
+                                <% }) %>
+
+                            <% } else { %>
+
+                                <p class="text-muted">No skills added.</p>
+
+                            <% } %>
+
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="text-secondary">LinkedIn</h6>
+
+                            <% if(profile.linkedin){ %>
+
+                                <a href="<%= profile.linkedin %>" target="_blank">
+                                    <%= profile.linkedin %>
+                                </a>
+
+                            <% } else { %>
+
+                                <p class="text-muted">Not Added</p>
+
+                            <% } %>
+
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="text-secondary">GitHub</h6>
+
+                            <% if(profile.github){ %>
+
+                                <a href="<%= profile.github %>" target="_blank">
+                                    <%= profile.github %>
+                                </a>
+
+                            <% } else { %>
+
+                                <p class="text-muted">Not Added</p>
+
+                            <% } %>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
