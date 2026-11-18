@@ -738,3 +738,58 @@ module.exports.optimizeOnePage = async (req, res) => {
         });
     }
 };
+
+// AI Resume Role-Tailoring Assistant
+module.exports.tailorResumeForJob = async (req, res) => {
+    try {
+        const {
+            jobId,
+            title = "",
+            company = "",
+            description = "",
+            requiredSkills = [],
+            preferredSkills = [],
+            resumeData = null,
+        } = req.body;
+
+        let resume = resumeData;
+
+        // If no explicit resume snapshot was passed, retrieve the candidate's active ResumeBuilder
+        if (!resume) {
+            resume = await ResumeBuilder.findOne({ user: req.user._id }).sort({ updatedAt: -1 });
+        }
+
+        // If still not found, construct a baseline structure from User profile
+        if (!resume) {
+            resume = {
+                summary: req.user.profile?.bio || "",
+                skills: req.user.profile?.skills || [],
+                experience: req.user.profile?.experience || [],
+                projects: req.user.profile?.projects || [],
+            };
+        }
+
+        const job = {
+            id: jobId,
+            title,
+            company,
+            description,
+            requiredSkills: Array.isArray(requiredSkills) ? requiredSkills : [],
+            preferredSkills: Array.isArray(preferredSkills) ? preferredSkills : [],
+        };
+
+        const tailoring = await aiService.tailorResumeForJobWithAi({ resume, job });
+
+        return res.json({
+            success: true,
+            message: "Resume successfully tailored for target role.",
+            tailoring,
+        });
+    } catch (err) {
+        console.error("API tailorResumeForJob error:", err);
+        return res.status(500).json({
+            success: false,
+            message: err.message || "Failed to tailor resume for the target role.",
+        });
+    }
+};

@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Loader,
 } from 'lucide-react';
+import { SmartApplyModal } from '../components/SmartApplyModal';
 
 export const PublicJobsPage: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -30,6 +31,17 @@ export const PublicJobsPage: React.FC = () => {
   const [applyError, setApplyError] = useState<string | null>(null);
   const [coverNote, setCoverNote] = useState<string>('');
   const [coverNoteJobId, setCoverNoteJobId] = useState<string | null>(null);
+  const [smartGateJob, setSmartGateJob] = useState<any | null>(null);
+
+  const handleApplyClick = (job: any) => {
+    if (!isAuthenticated) return;
+    setApplyError(null);
+    if (user?.role === 'job_seeker') {
+      setSmartGateJob(job);
+    } else {
+      setCoverNoteJobId(job._id);
+    }
+  };
 
   const handleApply = async (jobId: string) => {
     if (!isAuthenticated) return;
@@ -253,7 +265,7 @@ export const PublicJobsPage: React.FC = () => {
                     ) : (
                       <button
                         className="btn btn-primary btn-sm"
-                        onClick={() => { setApplyError(null); setCoverNoteJobId(job._id); }}
+                        onClick={() => handleApplyClick(job)}
                       >
                         <Send size={14} /> Apply via Platform
                       </button>
@@ -265,6 +277,16 @@ export const PublicJobsPage: React.FC = () => {
           ))}
         </div>
       )}
+
+      <SmartApplyModal
+        isOpen={Boolean(smartGateJob)}
+        job={smartGateJob}
+        onClose={() => setSmartGateJob(null)}
+        onAppliedSuccessfully={(id) => {
+          setAppliedIds((prev) => new Set(prev).add(id));
+          setSmartGateJob(null);
+        }}
+      />
     </div>
   );
 };

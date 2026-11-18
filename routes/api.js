@@ -14,6 +14,7 @@ const resumeBuilderController = require("../controllers/api/resumeBuilderControl
 const jobController = require("../controllers/api/jobController");
 const courseController = require("../controllers/api/courseController");
 const adminController = require("../controllers/api/adminController");
+const feedbackController = require("../controllers/api/feedbackController");
 
 // ==========================================
 // Health & Diagnostic Check
@@ -74,6 +75,7 @@ router.post("/resume-builder/ai-improve", requireAuth, requireRole("job_seeker")
 router.post("/resume-builder/photo", requireAuth, requireRole("job_seeker"), photoUpload.single("photo"), resumeBuilderController.uploadPhoto);
 router.delete("/resume-builder/photo", requireAuth, requireRole("job_seeker"), resumeBuilderController.deletePhoto);
 router.post("/resume-builder/optimize-one-page", requireAuth, requireRole("job_seeker"), resumeBuilderController.optimizeOnePage);
+router.post("/resume-builder/ai-tailor", requireAuth, requireRole("job_seeker"), resumeBuilderController.tailorResumeForJob);
 
 // ==========================================
 // Job Matching & Application Endpoints
@@ -81,6 +83,7 @@ router.post("/resume-builder/optimize-one-page", requireAuth, requireRole("job_s
 router.get("/jobs/recommended", requireAuth, requireRole("job_seeker"), jobController.getRecommendedJobs);
 router.get("/jobs/my-applications", requireAuth, requireRole("job_seeker"), jobController.getMyApplications);
 router.post("/jobs/:id/apply", requireAuth, requireRole("job_seeker"), jobController.applyToJob);
+router.delete("/jobs/applications/:id/withdraw", requireAuth, requireRole("job_seeker"), jobController.withdrawApplication);
 router.get("/jobs/public", jobController.getPublicJobs);
 router.get("/jobs/:id", jobController.getJobById);
 
@@ -95,6 +98,16 @@ router.patch("/recruiter/jobs/:id/toggle", requireAuth, requireRole("recruiter")
 router.delete("/recruiter/jobs/:id", requireAuth, requireRole("recruiter"), jobController.deleteJob);
 router.get("/recruiter/jobs/:id/applications", requireAuth, requireRole("recruiter"), jobController.getJobApplications);
 router.patch("/recruiter/applications/:id/status", requireAuth, requireRole("recruiter"), jobController.updateApplicationStatus);
+router.get("/recruiter/applications/:id/candidate-profile", requireAuth, requireRole("recruiter"), jobController.getCandidateProfileForRecruiter);
+
+// ==========================================
+// Universal Platform Feedback Endpoints
+// ==========================================
+router.post("/feedback", requireAuth, feedbackController.submitFeedback);
+router.get("/feedback/my", requireAuth, feedbackController.getMyFeedback);
+router.get("/admin/feedback", requireAuth, requireRole("admin"), feedbackController.getAdminFeedback);
+router.patch("/admin/feedback/:id", requireAuth, requireRole("admin"), feedbackController.updateFeedbackStatus);
+router.delete("/admin/feedback/:id", requireAuth, requireRole("admin"), feedbackController.deleteFeedback);
 
 // ==========================================
 // TrustBridge Verified Free Courses Endpoints

@@ -192,15 +192,15 @@ export const HomePage: React.FC = () => {
         <div className="grid-3">
           {TEMPLATES.map((tmpl) => (
             <div key={tmpl.id} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <span className="badge badge-primary">{tmpl.category}</span>
-                <span style={{ fontSize: '0.8rem', fontWeight: '600', color: tmpl.accentColor }}>
-                  {tmpl.badge}
-                </span>
               </div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: '700', marginBottom: '0.4rem' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--slate-900)', marginBottom: '0.25rem' }}>
                 {tmpl.name}
               </h3>
+              <div style={{ fontSize: '0.8rem', fontWeight: '600', color: tmpl.accentColor, marginBottom: '0.65rem' }}>
+                {tmpl.badge}
+              </div>
               <p style={{ fontSize: '0.875rem', color: 'var(--slate-600)', lineHeight: '1.5', flex: 1, marginBottom: '1rem' }}>
                 {tmpl.description}
               </p>

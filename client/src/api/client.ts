@@ -31,11 +31,22 @@ async function request<T = any>(endpoint: string, options: RequestInit = {}): Pr
   if (contentType && contentType.includes('application/json')) {
     data = await response.json();
   } else {
-    data = { success: response.ok, message: await response.text() };
+    const rawText = await response.text();
+    let cleanMessage = rawText;
+    const preMatch = rawText.match(/<pre>([\s\S]*?)<\/pre>/i);
+    if (preMatch && preMatch[1]) {
+      cleanMessage = preMatch[1].trim();
+    } else if (rawText.includes('<html') || rawText.includes('<!DOCTYPE')) {
+      cleanMessage = `Server error (${response.status}): ${response.statusText || 'Endpoint response error'}`;
+    }
+    data = { success: response.ok, message: cleanMessage };
   }
 
   if (!response.ok) {
-    const errorMsg = data?.message || `Request failed with status ${response.status}`;
+    let errorMsg = data?.message || `Request failed with status ${response.status}`;
+    if (errorMsg.includes('Cannot POST') || errorMsg.includes('Cannot GET')) {
+      errorMsg = `${errorMsg}. (Backend server ko restart karein taaki new API routes load ho jayein).`;
+    }
     const err = new Error(errorMsg);
     (err as any).status = response.status;
     (err as any).data = data;
@@ -126,12 +137,23 @@ export const builderApi = {
   },
   optimizeOnePage: (data: { summary?: string; experience?: any[]; projects?: any[]; skills?: string[]; targetRole?: string }) =>
     api.post('/resume-builder/optimize-one-page', data),
+  tailorResume: (data: {
+    jobId?: string;
+    title?: string;
+    company?: string;
+    description?: string;
+    requiredSkills?: string[];
+    preferredSkills?: string[];
+    resumeData?: any;
+  }) => api.post('/resume-builder/ai-tailor', data),
 };
 
 export const jobsApi = {
   getRecommended: () => api.get('/jobs/recommended'),
   getMyApplications: () => api.get('/jobs/my-applications'),
-  applyToJob: (id: string, coverNote?: string) => api.post(`/jobs/${id}/apply`, { coverNote }),
+  applyToJob: (id: string, coverNote?: string, extraData?: Record<string, any>) =>
+    api.post(`/jobs/${id}/apply`, { coverNote, ...(extraData || {}) }),
+  withdrawApplication: (id: string) => api.delete(`/jobs/applications/${id}/withdraw`),
   getPublicJobs: (params?: Record<string, string>) => {
     const query = params ? `?${new URLSearchParams(params).toString()}` : '';
     return api.get(`/jobs/public${query}`);
@@ -147,8 +169,10 @@ export const recruiterApi = {
   toggleStatus: (id: string) => api.patch(`/recruiter/jobs/${id}/toggle`),
   deleteJob: (id: string) => api.delete(`/recruiter/jobs/${id}`),
   getApplications: (jobId: string) => api.get(`/recruiter/jobs/${jobId}/applications`),
-  updateApplicationStatus: (appId: string, status: string) =>
-    api.patch(`/recruiter/applications/${appId}/status`, { status }),
+  updateApplicationStatus: (appId: string, status: string, feedback?: string) =>
+    api.patch(`/recruiter/applications/${appId}/status`, { status, feedback }),
+  getCandidateProfile: (appId: string) =>
+    api.get(`/recruiter/applications/${appId}/candidate-profile`),
 };
 
 export const coursesApi = {
@@ -198,4 +222,22 @@ export const adminApi = {
     return api.get(`/admin/logs${query}`);
   },
   getSystemHealth: () => api.get('/admin/system-health'),
+};
+
+export const feedbackApi = {
+  submit: (data: {
+    category: string;
+    rating: number;
+    subject: string;
+    message: string;
+    pageUrl?: string;
+  }) => api.post('/feedback', data),
+  getMyFeedback: () => api.get('/feedback/my'),
+  getAdminFeedback: (params?: Record<string, any>) => {
+    const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+    return api.get(`/admin/feedback${query}`);
+  },
+  updateStatus: (id: string, data: { status?: string; adminNote?: string }) =>
+    api.patch(`/admin/feedback/${id}`, data),
+  deleteFeedback: (id: string) => api.delete(`/admin/feedback/${id}`),
 };

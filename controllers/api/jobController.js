@@ -4,20 +4,23 @@ const ResumeBuilder = require("../../models/ResumeBuilder");
 const Resume = require("../../models/Resume");
 const Profile = require("../../models/Profile");
 const JobApplication = require("../../models/JobApplication");
-const { rankJobs } = require("../../services/jobMatchingService");
+const User = require("../../models/User");
+const { rankJobs, calculateJobMatch } = require("../../services/jobMatchingService");
 const { auditJobListing } = require("../../services/trustBridge/trustScore");
+const { getSignedResumeInlineUrl, getSignedResumeDownloadUrl } = require("../../services/cloudinaryService");
+const emailService = require("../../services/emailService");
 
 function parseSkills(value) {
+    let rawList = [];
     if (Array.isArray(value)) {
-        return value
-            .flatMap((item) => String(item).split(/[,;\n]/))
-            .map((skill) => skill.trim())
-            .filter(Boolean);
+        rawList = value.flatMap((item) => String(item).split(/[,;\n]/));
+    } else {
+        rawList = String(value || "").split(/[,;\n]/);
     }
-    return String(value || "")
-        .split(/[,;\n]/)
+    return rawList
         .map((skill) => skill.trim())
-        .filter(Boolean);
+        .filter(Boolean)
+        .map((skill) => (skill.length > 50 ? skill.slice(0, 45) + "..." : skill));
 }
 
 function validateJobData(data) {
@@ -50,11 +53,11 @@ function validateJobData(data) {
 // Job Seeker: Recommended Jobs matching resume skills & project evidence
 module.exports.getRecommendedJobs = async (req, res) => {
     try {
-        let resume = await ResumeBuilder.findOne({ user: req.user._id }).lean();
+        let resume = await ResumeBuilder.findOne({ user: req.user._id }).sort({ updatedAt: -1 }).lean();
 
         // Fallback: If no ResumeBuilder entry yet, check parsed Resume model
         if (!resume || !resume.skills || resume.skills.length === 0) {
-            const uploadedResume = await Resume.findOne({ user: req.user._id }).lean();
+            const uploadedResume = await Resume.findOne({ user: req.user._id, isProcessed: true }).sort({ createdAt: -1 }).lean();
             if (uploadedResume && uploadedResume.extractedSkills?.length > 0) {
                 resume = {
                     skills: uploadedResume.extractedSkills,
@@ -93,12 +96,36 @@ module.exports.getRecommendedJobs = async (req, res) => {
         // Aggregate unique missing required skills to power learning recommendations
         const missingSkillSet = new Set();
         recommendations.forEach((rec) => {
-            (rec.missingRequired || []).forEach((skill) => missingSkillSet.add(skill));
+            (rec.missingRequired || []).forEach((skill) => {
+                const clean = String(skill || "").trim();
+                if (clean && clean.length <= 40) {
+                    missingSkillSet.add(clean);
+                } else if (clean && clean.length > 40) {
+                    missingSkillSet.add(clean.slice(0, 35) + "...");
+                }
+            });
         });
 
-        // Also get IDs of jobs already applied to by this user
-        const appliedApplications = await JobApplication.find({ applicant: req.user._id }).select("job").lean();
+        // Also get IDs and exact applied scores of jobs already applied to by this user
+        const appliedApplications = await JobApplication.find({ applicant: req.user._id })
+            .select("job matchScore matchingSkills missingSkills")
+            .lean();
+        const appMap = new Map(appliedApplications.map((a) => [String(a.job), a]));
         const appliedJobIds = appliedApplications.map((a) => String(a.job));
+
+        // Synchronize recommendations with submitted applications so scores match 100%
+        recommendations.forEach((rec) => {
+            const app = appMap.get(String(rec._id));
+            if (app && typeof app.matchScore === "number") {
+                rec.matchScore = app.matchScore;
+                if (Array.isArray(app.matchingSkills) && app.matchingSkills.length > 0) {
+                    rec.matchedRequired = app.matchingSkills;
+                }
+                if (Array.isArray(app.missingSkills)) {
+                    rec.missingRequired = app.missingSkills;
+                }
+            }
+        });
 
         return res.json({
             success: true,
@@ -478,6 +505,13 @@ module.exports.applyToJob = async (req, res) => {
             });
         }
 
+        const {
+            coverNote = "",
+            tailoredMatchScore = null,
+            tailoredSkills = null,
+            tailoredSummary = "",
+        } = req.body;
+
         // Check if candidate already applied
         const existing = await JobApplication.findOne({
             job: jobId,
@@ -485,21 +519,79 @@ module.exports.applyToJob = async (req, res) => {
         });
 
         if (existing) {
+            // If candidate is submitting with AI-tailored improvements, upgrade their existing application with boosted match score & skills
+            if (tailoredMatchScore || (Array.isArray(tailoredSkills) && tailoredSkills.length > 0)) {
+                if (typeof tailoredMatchScore === "number" && tailoredMatchScore > 0) {
+                    existing.matchScore = Math.max(existing.matchScore || 0, Math.min(100, Math.round(tailoredMatchScore)));
+                }
+                if (Array.isArray(tailoredSkills) && tailoredSkills.length > 0) {
+                    existing.skills = Array.from(new Set([...(existing.skills || []), ...tailoredSkills]));
+                    const tailoredLower = new Set(tailoredSkills.map((s) => String(s).toLowerCase().trim()));
+                    const newMatches = (job.requiredSkills || []).filter((req) => tailoredLower.has(String(req).toLowerCase().trim()));
+                    existing.matchingSkills = Array.from(new Set([...(existing.matchingSkills || []), ...newMatches]));
+                    existing.missingSkills = (existing.missingSkills || []).filter((m) => !tailoredLower.has(String(m).toLowerCase().trim()));
+                }
+                if (coverNote && String(coverNote).trim()) {
+                    existing.coverNote = String(coverNote).trim();
+                }
+                await existing.save();
+
+                return res.status(200).json({
+                    success: true,
+                    message: "Your application has been successfully updated with your AI-tailored resume!",
+                    application: existing,
+                    updated: true,
+                });
+            }
+
             return res.status(409).json({
                 success: false,
                 message: "You have already applied for this job.",
             });
         }
 
-        // Gather candidate data from ResumeBuilder or Profile
-        const resume = await ResumeBuilder.findOne({ user: req.user._id }).lean();
+        // Gather candidate data from ResumeBuilder, uploaded Resume, and Profile
+        const builderResume = await ResumeBuilder.findOne({ user: req.user._id }).sort({ updatedAt: -1 }).lean();
+        const uploadedResume = await Resume.findOne({ user: req.user._id, isProcessed: true }).sort({ createdAt: -1 }).lean();
         const profile = await Profile.findOne({ user: req.user._id }).lean();
 
-        const candidateName = resume?.personal?.fullName || profile?.fullName || req.user.fullName;
-        const candidateEmail = resume?.personal?.email || req.user.email;
-        const candidatePhone = resume?.personal?.phone || profile?.phone || "";
-        const candidateLocation = resume?.personal?.location || profile?.location || "";
-        const candidateSkills = resume?.skills || profile?.skills || [];
+        // Calculate candidate-to-job ATS match score & missing skills
+        const candidateResumeSource = builderResume || uploadedResume || profile || {};
+        const matchResult = calculateJobMatch(candidateResumeSource, job);
+        let matchScore = typeof matchResult?.matchScore === "number" ? matchResult.matchScore : 0;
+        let matchingSkills = [
+            ...(Array.isArray(matchResult?.matchedRequired) ? matchResult.matchedRequired.map((s) => s.original || s.normalized || s) : []),
+            ...(Array.isArray(matchResult?.matchedPreferred) ? matchResult.matchedPreferred.map((s) => s.original || s.normalized || s) : []),
+        ];
+        let missingSkills = [
+            ...(Array.isArray(matchResult?.missingRequired) ? matchResult.missingRequired.map((s) => s.original || s.normalized || s) : []),
+            ...(Array.isArray(matchResult?.missingPreferred) ? matchResult.missingPreferred.map((s) => s.original || s.normalized || s) : []),
+        ];
+
+        // If candidate submitted with AI role tailoring, harmonize score and skills so recruiter sees the exact boosted score
+        if (typeof tailoredMatchScore === "number" && tailoredMatchScore > 0) {
+            matchScore = Math.max(matchScore, Math.min(100, Math.round(tailoredMatchScore)));
+        }
+
+        if (Array.isArray(tailoredSkills) && tailoredSkills.length > 0) {
+            const tailoredLower = new Set(tailoredSkills.map((s) => String(s).toLowerCase().trim()));
+            const newMatches = (job.requiredSkills || []).filter((req) => tailoredLower.has(String(req).toLowerCase().trim()));
+            matchingSkills = Array.from(new Set([...matchingSkills, ...newMatches]));
+            missingSkills = missingSkills.filter((m) => !tailoredLower.has(String(m).toLowerCase().trim()));
+        }
+
+        const candidateName = builderResume?.personal?.fullName || profile?.fullName || req.user.fullName;
+        const candidateEmail = builderResume?.personal?.email || req.user.email;
+        const candidatePhone = builderResume?.personal?.phone || profile?.phone || "";
+        const candidateLocation = builderResume?.personal?.location || profile?.location || "";
+        const candidateSkills = Array.isArray(tailoredSkills) && tailoredSkills.length > 0
+            ? tailoredSkills
+            : (Array.isArray(builderResume?.skills) && builderResume.skills.length > 0
+                ? builderResume.skills
+                : (Array.isArray(profile?.skills) ? profile.skills : []));
+
+        const resumeUrl = uploadedResume?.fileUrl || "";
+        const resumeId = uploadedResume?._id || builderResume?._id || null;
 
         const application = await JobApplication.create({
             job: jobId,
@@ -509,7 +601,12 @@ module.exports.applyToJob = async (req, res) => {
             phone: candidatePhone,
             location: candidateLocation,
             skills: candidateSkills,
-            coverNote: String(req.body.coverNote || "").trim(),
+            resumeUrl,
+            resumeId,
+            matchScore,
+            matchingSkills,
+            missingSkills,
+            coverNote: String(coverNote).trim(),
             status: "applied",
         });
 
@@ -527,7 +624,7 @@ module.exports.applyToJob = async (req, res) => {
     }
 };
 
-// Recruiter: Get All Applicants for a Specific Job
+// Recruiter: Get All Applicants for a Specific Job (Sorted with highest match first)
 module.exports.getJobApplications = async (req, res) => {
     try {
         const jobId = req.params.id;
@@ -552,7 +649,7 @@ module.exports.getJobApplications = async (req, res) => {
         }
 
         const applications = await JobApplication.find({ job: jobId })
-            .sort({ appliedAt: -1 })
+            .sort({ matchScore: -1, appliedAt: -1 })
             .lean();
 
         return res.json({
@@ -571,11 +668,76 @@ module.exports.getJobApplications = async (req, res) => {
     }
 };
 
-// Recruiter: Update Candidate Application Status (reviewed / shortlisted / rejected)
+// Recruiter: Get Deep Candidate Profile & Signed Resume Link for Inspection
+module.exports.getCandidateProfileForRecruiter = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(404).json({ success: false, message: "Application not found." });
+        }
+
+        const application = await JobApplication.findById(id).lean();
+        if (!application) {
+            return res.status(404).json({ success: false, message: "Application not found." });
+        }
+
+        const job = await Job.findOne({ _id: application.job, recruiter: req.user._id }).lean();
+        if (!job) {
+            return res.status(403).json({ success: false, message: "Access denied." });
+        }
+
+        // Fetch candidate details
+        const candidateUser = await User.findById(application.applicant).select("-password").lean();
+        const candidateProfile = await Profile.findOne({ user: application.applicant }).lean();
+        const resumeBuilder = await ResumeBuilder.findOne({ user: application.applicant }).sort({ updatedAt: -1 }).lean();
+        const uploadedResume = application.resumeId
+            ? await Resume.findById(application.resumeId).lean()
+            : await Resume.findOne({ user: application.applicant, isProcessed: true }).sort({ createdAt: -1 }).lean();
+
+        // Generate signed URL if Cloudinary asset exists
+        let signedResumeUrl = null;
+        if (uploadedResume?.cloudinaryPublicId) {
+            signedResumeUrl = getSignedResumeInlineUrl(uploadedResume.cloudinaryPublicId, "raw", "resume.pdf", 900);
+        } else if (uploadedResume?.fileUrl) {
+            signedResumeUrl = uploadedResume.fileUrl;
+        } else if (application.resumeUrl) {
+            signedResumeUrl = application.resumeUrl;
+        }
+
+        return res.json({
+            success: true,
+            application,
+            candidate: {
+                _id: candidateUser?._id,
+                fullName: candidateUser?.fullName || application.fullName,
+                email: candidateUser?.email || application.email,
+                avatar: candidateUser?.avatar,
+            },
+            candidateProfile: candidateProfile || null,
+            resumeBuilder: resumeBuilder || null,
+            resumeUrl: signedResumeUrl,
+            job: {
+                id: job._id,
+                title: job.title,
+                company: job.company,
+                requiredSkills: job.requiredSkills || [],
+                preferredSkills: job.preferredSkills || [],
+            },
+        });
+    } catch (err) {
+        console.error("API getCandidateProfileForRecruiter error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch candidate profile details.",
+        });
+    }
+};
+
+// Recruiter: Update Candidate Application Status (reviewed / shortlisted / rejected) with Feedback & Email Dispatch
 module.exports.updateApplicationStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, feedback = "" } = req.body;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(404).json({ success: false, message: "Application not found." });
@@ -598,18 +760,80 @@ module.exports.updateApplicationStatus = async (req, res) => {
         }
 
         application.status = status;
+        if (typeof feedback === "string") {
+            application.recruiterFeedback = feedback.trim();
+        }
+        application.reviewedAt = new Date();
         await application.save();
+
+        // Dispatch transactional status update email alert to candidate (resilient to SMTP offline)
+        let emailDispatched = false;
+        let recipientEmail = null;
+        try {
+            const candidateUser = await User.findById(application.applicant).lean();
+            recipientEmail = application.email || candidateUser?.email;
+            if (recipientEmail) {
+                const info = await emailService.sendApplicationStatusUpdateEmail({
+                    to: recipientEmail,
+                    candidateName: application.fullName || candidateUser?.fullName || "Candidate",
+                    jobTitle: job.title,
+                    company: job.company,
+                    status,
+                    recruiterFeedback: application.recruiterFeedback,
+                });
+                emailDispatched = Boolean(info && (info.messageId || info.accepted?.length > 0));
+            }
+        } catch (emailErr) {
+            console.warn("[JobApplication Email Alert] Notice:", emailErr.message);
+        }
 
         return res.json({
             success: true,
             message: `Candidate status updated to ${status}.`,
             application,
+            emailDispatched,
+            recipientEmail,
         });
     } catch (err) {
         console.error("API updateApplicationStatus error:", err);
         return res.status(500).json({
             success: false,
             message: "Failed to update application status.",
+        });
+    }
+};
+
+// Job Seeker: Withdraw Application
+module.exports.withdrawApplication = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(404).json({ success: false, message: "Application not found." });
+        }
+
+        const application = await JobApplication.findById(id);
+        if (!application) {
+            return res.status(404).json({ success: false, message: "Application not found." });
+        }
+
+        if (!application.applicant.equals(req.user._id)) {
+            return res.status(403).json({
+                success: false,
+                message: "You can only withdraw your own applications.",
+            });
+        }
+
+        await JobApplication.findByIdAndDelete(id);
+
+        return res.json({
+            success: true,
+            message: "Application withdrawn successfully.",
+        });
+    } catch (err) {
+        console.error("API withdrawApplication error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to withdraw application.",
         });
     }
 };

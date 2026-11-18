@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 
@@ -51,12 +52,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRole?: string
 
 export const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <div className="app-container">
-          <Navbar />
-          <main className="main-content">
-            <Routes>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <div className="app-container">
+            <Navbar />
+            <main className="main-content">
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
@@ -177,7 +179,8 @@ export const App: React.FC = () => {
         </div>
       </BrowserRouter>
     </AuthProvider>
-  );
+  </ThemeProvider>
+);
 };
 
 export default App;

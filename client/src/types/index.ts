@@ -113,6 +113,13 @@ export interface JobApplication {
   phone?: string;
   location?: string;
   skills?: string[];
+  resumeUrl?: string;
+  resumeId?: string;
+  matchScore?: number;
+  matchingSkills?: string[];
+  missingSkills?: string[];
+  recruiterFeedback?: string;
+  reviewedAt?: string;
   coverNote?: string;
   status: 'applied' | 'reviewed' | 'shortlisted' | 'rejected';
   appliedAt: string;

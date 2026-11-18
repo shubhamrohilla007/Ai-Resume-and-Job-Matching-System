@@ -17,7 +17,10 @@ import {
   X,
   Search,
   ShieldCheck,
+  MessageSquare,
 } from 'lucide-react';
+import { ThemeToggle } from './ThemeToggle';
+import { FeedbackModal } from './FeedbackModal';
 
 export const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -26,6 +29,7 @@ export const Navbar: React.FC = () => {
 
   const [resumeDropdownOpen, setResumeDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -51,7 +55,7 @@ export const Navbar: React.FC = () => {
     }
     closeTimerRef.current = setTimeout(() => {
       setResumeDropdownOpen(false);
-    }, 180);
+    }, 250);
   };
 
   const handleTriggerClick = (e: React.MouseEvent) => {
@@ -112,11 +116,14 @@ export const Navbar: React.FC = () => {
     <nav className="navbar no-print">
       <div className="navbar-inner">
         {/* Brand */}
-        <Link to="/" className="nav-brand">
+        <Link to="/" className="nav-brand" title="AI Resume & Careers Platform">
           <div className="nav-brand-logo">
             <FileText size={18} />
           </div>
-          <span className="nav-brand-text">AI Resume & Careers</span>
+          <span className="nav-brand-text">
+            <span className="nav-brand-main">AI Resume</span>
+            <span className="nav-brand-sub"> & Careers</span>
+          </span>
         </Link>
 
         {/* Center Navigation Links (Desktop: >= 992px) */}
@@ -282,6 +289,20 @@ export const Navbar: React.FC = () => {
                 </span>
               </Link>
 
+              {/* Theme Switcher */}
+              <ThemeToggle />
+
+              {/* Feedback Button */}
+              <button
+                type="button"
+                onClick={() => setFeedbackOpen(true)}
+                className="btn btn-secondary btn-sm nav-feedback-btn"
+                title="Send platform feedback"
+              >
+                <MessageSquare size={14} />
+                <span className="nav-feedback-text">Feedback</span>
+              </button>
+
               {/* Desktop Logout Button */}
               <button
                 onClick={handleLogout}
@@ -294,6 +315,7 @@ export const Navbar: React.FC = () => {
             </>
           ) : (
             <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              <ThemeToggle />
               <Link to="/login" className="btn btn-secondary btn-sm">
                 Login
               </Link>
@@ -409,7 +431,21 @@ export const Navbar: React.FC = () => {
               </Link>
             </div>
 
-            <div style={{ paddingTop: '0.75rem', borderTop: '1px solid var(--slate-200)', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.5rem', borderTop: '1px solid var(--slate-200)', marginTop: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--slate-700)' }}>Theme</span>
+              <ThemeToggle showLabel={true} />
+            </div>
+
+            <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--slate-200)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => { setFeedbackOpen(true); setMobileMenuOpen(false); }}
+                className="btn btn-secondary btn-sm"
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                <MessageSquare size={15} />
+                <span>Give Platform Feedback</span>
+              </button>
               <button
                 onClick={handleLogout}
                 className="btn btn-secondary btn-sm"
@@ -430,7 +466,20 @@ export const Navbar: React.FC = () => {
               <GraduationCap size={17} />
               <span>Free Courses</span>
             </Link>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => { setFeedbackOpen(true); setMobileMenuOpen(false); }}
+              className="nav-mobile-link"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', padding: '0.5rem 0' }}
+            >
+              <MessageSquare size={17} />
+              <span>Give Platform Feedback</span>
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0', borderTop: '1px solid var(--slate-200)', marginTop: '0.25rem' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--slate-700)' }}>Theme</span>
+              <ThemeToggle showLabel={true} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.25rem' }}>
               <Link to="/login" className="btn btn-secondary btn-sm">
                 Login
               </Link>
@@ -441,6 +490,8 @@ export const Navbar: React.FC = () => {
           </div>
         )}
       </div>
+
+      <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </nav>
   );
 };

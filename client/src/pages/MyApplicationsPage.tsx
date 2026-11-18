@@ -17,11 +17,15 @@ import {
   MapPin,
   Calendar,
   AlertCircle,
+  MessageSquare,
+  Trash2,
 } from 'lucide-react';
 
 export const MyApplicationsPage: React.FC = () => {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'shortlisted' | 'in_progress' | 'rejected'>('all');
   const [stats, setStats] = useState({
     total: 0,
@@ -51,6 +55,25 @@ export const MyApplicationsPage: React.FC = () => {
     fetchApplications();
   }, []);
 
+  const handleWithdrawApplication = async (appId: string) => {
+    if (!window.confirm('Are you sure you want to withdraw this application? This action cannot be undone.')) {
+      return;
+    }
+    setWithdrawingId(appId);
+    try {
+      const res = await jobsApi.withdrawApplication(appId);
+      if (res.success) {
+        setApplications((prev) => prev.filter((a) => a._id !== appId));
+        setActionNotice('Your application was withdrawn successfully.');
+        setTimeout(() => setActionNotice(null), 3500);
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || err?.message || 'Failed to withdraw application.');
+    } finally {
+      setWithdrawingId(null);
+    }
+  };
+
   const filteredApplications = applications.filter((app) => {
     if (filter === 'all') return true;
     if (filter === 'shortlisted') return app.status === 'shortlisted';
@@ -79,6 +102,26 @@ export const MyApplicationsPage: React.FC = () => {
           Track real-time hiring decisions: see whether recruiters have reviewed, shortlisted, or decided on your applications.
         </p>
       </div>
+
+      {actionNotice && (
+        <div
+          style={{
+            padding: '0.85rem 1.25rem',
+            borderRadius: '8px',
+            backgroundColor: '#ecfdf5',
+            border: '1px solid #a7f3d0',
+            color: '#065f46',
+            fontWeight: 600,
+            fontSize: '0.9rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+          }}
+        >
+          <CheckCircle2 size={18} /> {actionNotice}
+        </div>
+      )}
 
       {/* Summary Stat Cards */}
       <div className="grid-4" style={{ marginBottom: '2rem' }}>
@@ -383,6 +426,28 @@ export const MyApplicationsPage: React.FC = () => {
                   )}
                 </div>
 
+                {/* Recruiter Feedback Note if provided */}
+                {app.recruiterFeedback && (
+                  <div
+                    style={{
+                      marginTop: '0.5rem',
+                      marginBottom: '1rem',
+                      padding: '0.85rem 1rem',
+                      backgroundColor: '#eff6ff',
+                      borderLeft: '4px solid #2563eb',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700, color: '#1e40af', marginBottom: '0.25rem' }}>
+                      <MessageSquare size={15} /> Recruiter Feedback & Interview Note:
+                    </div>
+                    <div style={{ color: '#1e293b', fontStyle: 'italic', lineHeight: 1.5 }}>
+                      "{app.recruiterFeedback}"
+                    </div>
+                  </div>
+                )}
+
                 {/* Cover Note Snippet if provided */}
                 {app.coverNote && (
                   <div style={{ fontSize: '0.85rem', color: 'var(--slate-600)', background: '#f8fafc', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>
@@ -396,7 +461,19 @@ export const MyApplicationsPage: React.FC = () => {
                     Candidate profile: <strong>{app.fullName}</strong> ({app.email})
                   </div>
 
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    {(app.status === 'applied' || app.status === 'reviewed') && (
+                      <button
+                        type="button"
+                        onClick={() => handleWithdrawApplication(app._id)}
+                        disabled={withdrawingId === app._id}
+                        className="btn btn-secondary btn-sm"
+                        style={{ color: '#dc2626', borderColor: '#fecaca', fontSize: '0.8rem' }}
+                        title="Withdraw this active application"
+                      >
+                        <Trash2 size={13} /> {withdrawingId === app._id ? 'Withdrawing...' : 'Withdraw'}
+                      </button>
+                    )}
                     {job?.applicationUrl && (
                       <a
                         href={job.applicationUrl}

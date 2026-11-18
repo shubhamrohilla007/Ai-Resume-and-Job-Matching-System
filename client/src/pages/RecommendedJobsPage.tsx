@@ -17,6 +17,7 @@ import {
   Send,
   Loader,
 } from 'lucide-react';
+import { SmartApplyModal } from '../components/SmartApplyModal';
 
 export const RecommendedJobsPage: React.FC = () => {
   const [recommendations, setRecommendations] = useState<JobRecommendation[]>([]);
@@ -30,6 +31,19 @@ export const RecommendedJobsPage: React.FC = () => {
   const [coverNote, setCoverNote] = useState<string>('');
   const [coverNoteJobId, setCoverNoteJobId] = useState<string | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
+  const [smartGateJob, setSmartGateJob] = useState<any | null>(null);
+
+  const handleApplyClick = (job: any) => {
+    setApplyError(null);
+    const score = typeof job.matchScore === 'number' ? job.matchScore : (typeof job.ruleScore === 'number' ? job.ruleScore : 0);
+    const hasMissingCore = Array.isArray(job.missingRequired) && job.missingRequired.length > 0;
+
+    if (score < 50 || hasMissingCore) {
+      setSmartGateJob(job);
+    } else {
+      setCoverNoteJobId(job._id);
+    }
+  };
 
   const handleApply = async (jobId: string) => {
     setApplyingId(jobId);
@@ -133,24 +147,50 @@ export const RecommendedJobsPage: React.FC = () => {
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '1rem',
+          maxWidth: '100%',
+          overflow: 'hidden',
+          boxSizing: 'border-box',
         }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '700', color: '#1e40af' }}>
-              <GraduationCap size={20} />
-              Identified Skill Gaps Across Recommended Jobs
+          <div style={{ flex: '1 1 300px', minWidth: 0, maxWidth: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '700', color: '#1e40af', marginBottom: '0.35rem' }}>
+              <GraduationCap size={20} style={{ flexShrink: 0 }} />
+              <span>Identified Skill Gaps Across Recommended Jobs</span>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '0.5rem' }}>
-              {missingSkillsAggregate.map((skill, i) => (
-                <span key={i} className="badge badge-warning">
-                  {skill}
-                </span>
-              ))}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '0.5rem', maxWidth: '100%', overflow: 'hidden' }}>
+              {missingSkillsAggregate
+                .filter((s) => s && s.trim().length > 0)
+                .map((skill, i) => {
+                  const isLong = skill.length > 35;
+                  const displaySkill = isLong ? skill.slice(0, 35) + '...' : skill;
+                  return (
+                    <span
+                      key={i}
+                      className="badge badge-warning"
+                      title={skill}
+                      style={{
+                        maxWidth: '100%',
+                        whiteSpace: 'normal',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'anywhere',
+                        lineHeight: 1.35,
+                      }}
+                    >
+                      {displaySkill}
+                    </span>
+                  );
+                })}
             </div>
           </div>
 
           <Link
-            to={`/courses?skills=${encodeURIComponent(missingSkillsAggregate.join(','))}`}
+            to={`/courses?skills=${encodeURIComponent(
+              missingSkillsAggregate
+                .filter((s) => s && s.length <= 35)
+                .slice(0, 5)
+                .join(',')
+            )}`}
             className="btn btn-primary btn-sm"
+            style={{ flexShrink: 0 }}
           >
             Find Free Courses for Missing Skills <ArrowRight size={14} />
           </Link>
@@ -174,7 +214,7 @@ export const RecommendedJobsPage: React.FC = () => {
           {recommendations.map((job) => (
             <div key={job._id || job.title} className="card" style={{ padding: '1.5rem' }}>
               {/* Header: Title, Company, Scores */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }} className="job-card-header">
                 <div>
                   <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--slate-900)' }}>
                     {job.title}
@@ -188,7 +228,7 @@ export const RecommendedJobsPage: React.FC = () => {
                 </div>
 
                 {/* Score Badges - Strictly Separated */}
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }} className="job-card-scores">
                   {/* Job Match Score */}
                   <div style={{ textAlign: 'center', background: '#f8fafc', padding: '0.6rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--slate-200)' }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--slate-500)', textTransform: 'uppercase' }}>
@@ -360,7 +400,7 @@ export const RecommendedJobsPage: React.FC = () => {
                   ) : (
                     <button
                       className="btn btn-primary btn-sm"
-                      onClick={() => { setApplyError(null); setCoverNoteJobId(job._id); }}
+                      onClick={() => handleApplyClick(job)}
                     >
                       <Send size={14} /> Apply via Platform
                     </button>
@@ -371,6 +411,16 @@ export const RecommendedJobsPage: React.FC = () => {
           ))}
         </div>
       )}
+
+      <SmartApplyModal
+        isOpen={Boolean(smartGateJob)}
+        job={smartGateJob}
+        onClose={() => setSmartGateJob(null)}
+        onAppliedSuccessfully={(id) => {
+          setAppliedIds((prev) => new Set(prev).add(id));
+          setSmartGateJob(null);
+        }}
+      />
     </div>
   );
 };

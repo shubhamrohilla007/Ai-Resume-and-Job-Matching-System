@@ -422,6 +422,118 @@ function _clearSentEmails() {
     }
 }
 
+/**
+ * Send job application status update email to candidate
+ * @param {Object} options
+ * @param {string} options.to - Candidate's email address
+ * @param {string} options.candidateName - Candidate's full name
+ * @param {string} options.jobTitle - Job title applied for
+ * @param {string} options.company - Company name
+ * @param {string} options.status - New application status
+ * @param {string} [options.recruiterFeedback] - Optional recruiter feedback note
+ */
+async function sendApplicationStatusUpdateEmail({
+    to,
+    candidateName = "Candidate",
+    jobTitle = "Position",
+    company = "Company",
+    status = "reviewed",
+    recruiterFeedback = "",
+}) {
+    if (!to) {
+        throw new Error("Recipient email is required to dispatch application status email.");
+    }
+
+    const baseUrl = getFrontendBaseUrl();
+    const applicationsUrl = `${baseUrl}/applications`;
+    const sender = process.env.EMAIL_FROM || (process.env.SMTP_USER ? `"AI Resume & Careers" <${process.env.SMTP_USER}>` : `"AI Resume & Careers" <no-reply@airesumesystem.com>`);
+
+    const statusLabels = {
+        shortlisted: { title: "🎉 Application Shortlisted!", color: "#059669", bg: "#ecfdf5", desc: "Congratulations! The hiring team has shortlisted your application for the next evaluation round." },
+        rejected: { title: "Application Status Update", color: "#dc2626", bg: "#fef2f2", desc: "Thank you for your interest. After reviewing your profile, the hiring team has decided not to proceed with your application at this time." },
+        interviewing: { title: "Interview Invitation Pending", color: "#2563eb", bg: "#eff6ff", desc: "Great news! The recruiter has marked your profile for an interview." },
+        reviewed: { title: "Application Under Review", color: "#d97706", bg: "#fffbeb", desc: "Your application has been reviewed by the hiring manager." },
+        accepted: { title: "🎉 Offer Extended / Accepted!", color: "#059669", bg: "#ecfdf5", desc: "Congratulations! The hiring team has accepted your application." },
+    };
+
+    const statusInfo = statusLabels[status.toLowerCase()] || {
+        title: `Application Status: ${status}`,
+        color: "#2563eb",
+        bg: "#eff6ff",
+        desc: `Your application status has been updated to "${status}".`,
+    };
+
+    const feedbackSection = recruiterFeedback
+        ? `
+        <div style="margin: 20px 0; padding: 16px; background-color: #f1f5f9; border-left: 4px solid #3b82f6; border-radius: 4px;">
+          <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.5px;">Recruiter Feedback & Notes:</p>
+          <p style="margin: 0; font-size: 14px; color: #1e293b; font-style: italic; line-height: 1.5;">"${recruiterFeedback}"</p>
+        </div>`
+        : "";
+
+    const mailOptions = {
+        from: sender,
+        to,
+        subject: `${statusInfo.title} - ${jobTitle} at ${company}`,
+        text: `Hello ${candidateName},
+
+Your application for "${jobTitle}" at "${company}" has an update.
+
+Status: ${status.toUpperCase()}
+${statusInfo.desc}
+${recruiterFeedback ? `\nRecruiter Feedback: "${recruiterFeedback}"\n` : ""}
+You can track all your job applications at:
+${applicationsUrl}
+
+Best regards,
+The Recruitment Team via AI Resume & Job Matching System`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${statusInfo.title}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #1e293b;">
+  <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+    <div style="background-color: #1e293b; padding: 20px 24px; text-align: center;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 18px; font-weight: 700;">AI Resume & Job Matching Platform</h1>
+    </div>
+    <div style="padding: 28px 24px;">
+      <div style="display: inline-block; padding: 6px 12px; border-radius: 9999px; background-color: ${statusInfo.bg}; color: ${statusInfo.color}; font-size: 13px; font-weight: 700; margin-bottom: 16px;">
+        ${status.toUpperCase()}
+      </div>
+      <h2 style="margin: 0 0 12px 0; font-size: 20px; font-weight: 700; color: #0f172a;">${statusInfo.title}</h2>
+      <p style="margin: 0 0 16px 0; font-size: 15px; color: #475569; line-height: 1.5;">
+        Dear <strong>${candidateName}</strong>,
+      </p>
+      <p style="margin: 0 0 16px 0; font-size: 15px; color: #475569; line-height: 1.5;">
+        There is an update regarding your application for <strong>${jobTitle}</strong> at <strong>${company}</strong>.
+      </p>
+      <p style="margin: 0 0 16px 0; font-size: 15px; color: #334155; line-height: 1.5;">
+        ${statusInfo.desc}
+      </p>
+      ${feedbackSection}
+      <div style="margin: 28px 0; text-align: center;">
+        <a href="${applicationsUrl}" style="background-color: #2563eb; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; display: inline-block; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);">
+          View My Applications &rarr;
+        </a>
+      </div>
+      <p style="margin: 0; font-size: 13px; color: #94a3b8; text-align: center;">
+        If you have questions, please log into your candidate dashboard.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`,
+    };
+
+    const transporter = getTransporter();
+    const info = await transporter.sendMail(mailOptions);
+    recordSentEmail(mailOptions, info.messageId);
+    return info;
+}
+
 module.exports = {
     isSmtpConfigured,
     verifySmtpConnection,
@@ -429,6 +541,7 @@ module.exports = {
     printSmtpDiagnostics,
     sendPasswordResetEmail,
     sendGoogleAccountNoticeEmail,
+    sendApplicationStatusUpdateEmail,
     getFrontendBaseUrl,
     _getLastSentEmail,
     _getAllSentEmails,

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { adminApi } from '../api/client';
+import { adminApi, feedbackApi } from '../api/client';
 import {
   ShieldCheck,
   Users,
@@ -28,6 +28,8 @@ import {
   TrendingUp,
   BarChart2,
   Key,
+  MessageSquare,
+  Star,
 } from 'lucide-react';
 
 type AdminTab =
@@ -38,6 +40,7 @@ type AdminTab =
   | 'resumes'
   | 'applications'
   | 'logs'
+  | 'feedback'
   | 'settings';
 
 export const AdminDashboardPage: React.FC = () => {
@@ -89,6 +92,17 @@ export const AdminDashboardPage: React.FC = () => {
   const [logTotalPages, setLogTotalPages] = useState(1);
   const [logActionFilter, setLogActionFilter] = useState('');
   const [logSearch, setLogSearch] = useState('');
+
+  // Feedback tab states
+  const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [feedbackPage, setFeedbackPage] = useState(1);
+  const [feedbackTotalPages, setFeedbackTotalPages] = useState(1);
+  const [feedbackCategoryFilter, setFeedbackCategoryFilter] = useState('all');
+  const [feedbackRoleFilter, setFeedbackRoleFilter] = useState('all');
+  const [feedbackStatusFilter, setFeedbackStatusFilter] = useState('all');
+  const [feedbackMetrics, setFeedbackMetrics] = useState({ total: 0, pending: 0, reviewed: 0, resolved: 0, avgRating: 5.0 });
+  const [activeFeedbackNoteId, setActiveFeedbackNoteId] = useState<string | null>(null);
+  const [adminNoteInput, setAdminNoteInput] = useState('');
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -210,6 +224,52 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
+  // Load Feedback Data
+  const loadFeedbacks = async () => {
+    try {
+      const params: any = { page: feedbackPage, limit: 12 };
+      if (feedbackCategoryFilter && feedbackCategoryFilter !== 'all') params.category = feedbackCategoryFilter;
+      if (feedbackRoleFilter && feedbackRoleFilter !== 'all') params.userRole = feedbackRoleFilter;
+      if (feedbackStatusFilter && feedbackStatusFilter !== 'all') params.status = feedbackStatusFilter;
+      const res = await feedbackApi.getAdminFeedback(params);
+      if (res.success) {
+        setFeedbacks(res.feedbacks || []);
+        setFeedbackTotalPages(res.pagination?.totalPages || 1);
+        if (res.metrics) setFeedbackMetrics(res.metrics);
+      }
+    } catch (err: any) {
+      setToast({ type: 'error', message: err.message || 'Failed to load feedbacks' });
+    }
+  };
+
+  // Update Feedback Status / Admin Note
+  const handleUpdateFeedback = async (id: string, status?: string, adminNote?: string) => {
+    try {
+      const res = await feedbackApi.updateStatus(id, { status, adminNote });
+      if (res.success) {
+        setToast({ type: 'success', message: 'Feedback updated successfully' });
+        setActiveFeedbackNoteId(null);
+        await loadFeedbacks();
+      }
+    } catch (err: any) {
+      setToast({ type: 'error', message: err.message || 'Failed to update feedback' });
+    }
+  };
+
+  // Delete Feedback
+  const handleDeleteFeedback = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this feedback item?')) return;
+    try {
+      const res = await feedbackApi.deleteFeedback(id);
+      if (res.success) {
+        setToast({ type: 'success', message: 'Feedback entry deleted' });
+        await loadFeedbacks();
+      }
+    } catch (err: any) {
+      setToast({ type: 'error', message: err.message || 'Failed to delete feedback' });
+    }
+  };
+
   // Initial tab loading
   useEffect(() => {
     setLoading(true);
@@ -236,6 +296,9 @@ export const AdminDashboardPage: React.FC = () => {
         case 'logs':
           await loadLogs();
           break;
+        case 'feedback':
+          await loadFeedbacks();
+          break;
         case 'settings':
           await adminApi.getSystemHealth().then((res) => {
             if (res.success) setSystemHealth(res.system);
@@ -259,6 +322,10 @@ export const AdminDashboardPage: React.FC = () => {
     appStatusFilter,
     logPage,
     logActionFilter,
+    feedbackPage,
+    feedbackCategoryFilter,
+    feedbackRoleFilter,
+    feedbackStatusFilter,
   ]);
 
   // Handler: Change Role
@@ -432,6 +499,7 @@ export const AdminDashboardPage: React.FC = () => {
               else if (activeTab === 'resumes') loadResumes();
               else if (activeTab === 'applications') loadApplications();
               else if (activeTab === 'logs') loadLogs();
+              else if (activeTab === 'feedback') loadFeedbacks();
               setTimeout(() => setLoading(false), 400);
             }}
             className="btn btn-secondary"
@@ -479,6 +547,7 @@ export const AdminDashboardPage: React.FC = () => {
           { id: 'resumes', label: 'Resumes & ATS', icon: FileText },
           { id: 'applications', label: 'Applications', icon: ClipboardList },
           { id: 'logs', label: 'Activity Logs', icon: Activity },
+          { id: 'feedback', label: 'Platform Feedback', icon: MessageSquare },
           { id: 'settings', label: 'System & Profile', icon: Settings },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -1316,6 +1385,362 @@ export const AdminDashboardPage: React.FC = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB: PLATFORM FEEDBACK & GOVERNANCE */}
+          {/* ========================================================================= */}
+          {activeTab === 'feedback' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* Feedback Metric Cards */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+                  gap: '1rem',
+                }}
+              >
+                <div className="card" style={{ padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--slate-500)', fontWeight: 600 }}>Total Feedbacks</span>
+                    <MessageSquare size={18} color="var(--primary)" />
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--slate-900)', marginTop: '0.5rem' }}>
+                    {feedbackMetrics.total}
+                  </div>
+                </div>
+
+                <div className="card" style={{ padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--slate-500)', fontWeight: 600 }}>Average Rating</span>
+                    <Star size={18} color="#f59e0b" fill="#f59e0b" />
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#f59e0b', marginTop: '0.5rem' }}>
+                    {feedbackMetrics.avgRating} <span style={{ fontSize: '1rem', color: 'var(--slate-400)' }}>/ 5.0</span>
+                  </div>
+                </div>
+
+                <div className="card" style={{ padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--slate-500)', fontWeight: 600 }}>Pending Review</span>
+                    <AlertTriangle size={18} color="#d97706" />
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#d97706', marginTop: '0.5rem' }}>
+                    {feedbackMetrics.pending}
+                  </div>
+                </div>
+
+                <div className="card" style={{ padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--slate-500)', fontWeight: 600 }}>Resolved</span>
+                    <CheckCircle2 size={18} color="#059669" />
+                  </div>
+                  <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#059669', marginTop: '0.5rem' }}>
+                    {feedbackMetrics.resolved}
+                  </div>
+                </div>
+              </div>
+
+              {/* Feedback Management Card */}
+              <div className="card" style={{ padding: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--slate-900)' }}>Platform User Feedback</h3>
+                    <p style={{ color: 'var(--slate-500)', fontSize: '0.85rem' }}>
+                      Review incoming user ratings, bug reports, and UX improvement requests from candidates and recruiters.
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {/* Category Filter */}
+                    <select
+                      value={feedbackCategoryFilter}
+                      onChange={(e) => {
+                        setFeedbackCategoryFilter(e.target.value);
+                        setFeedbackPage(1);
+                      }}
+                      style={{ padding: '0.45rem 0.75rem', borderRadius: '6px', border: '1px solid var(--slate-300)', fontSize: '0.85rem' }}
+                    >
+                      <option value="all">All Categories</option>
+                      <option value="general">General</option>
+                      <option value="ui_ux">UI / UX</option>
+                      <option value="feature_request">Feature Request</option>
+                      <option value="job_quality">Job Quality</option>
+                      <option value="bug">Bug Report</option>
+                    </select>
+
+                    {/* Role Filter */}
+                    <select
+                      value={feedbackRoleFilter}
+                      onChange={(e) => {
+                        setFeedbackRoleFilter(e.target.value);
+                        setFeedbackPage(1);
+                      }}
+                      style={{ padding: '0.45rem 0.75rem', borderRadius: '6px', border: '1px solid var(--slate-300)', fontSize: '0.85rem' }}
+                    >
+                      <option value="all">All User Roles</option>
+                      <option value="job_seeker">Job Seekers</option>
+                      <option value="recruiter">Recruiters</option>
+                      <option value="admin">Admins</option>
+                    </select>
+
+                    {/* Status Filter */}
+                    <select
+                      value={feedbackStatusFilter}
+                      onChange={(e) => {
+                        setFeedbackStatusFilter(e.target.value);
+                        setFeedbackPage(1);
+                      }}
+                      style={{ padding: '0.45rem 0.75rem', borderRadius: '6px', border: '1px solid var(--slate-300)', fontSize: '0.85rem' }}
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="pending">Pending</option>
+                      <option value="reviewed">Reviewed</option>
+                      <option value="resolved">Resolved</option>
+                    </select>
+                  </div>
+                </div>
+
+                {feedbacks.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--slate-500)' }}>
+                    <MessageSquare size={36} style={{ margin: '0 auto 0.75rem auto', opacity: 0.5 }} />
+                    <p style={{ fontWeight: 600, fontSize: '0.95rem' }}>No feedback submissions found matching selected filters.</p>
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid var(--slate-200)', color: 'var(--slate-600)' }}>
+                          <th style={{ padding: '0.75rem 0.5rem' }}>User</th>
+                          <th style={{ padding: '0.75rem 0.5rem' }}>Rating & Category</th>
+                          <th style={{ padding: '0.75rem 0.5rem', width: '38%' }}>Feedback Subject & Comments</th>
+                          <th style={{ padding: '0.75rem 0.5rem' }}>Status</th>
+                          <th style={{ padding: '0.75rem 0.5rem' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {feedbacks.map((fb) => (
+                          <React.Fragment key={fb._id}>
+                            <tr style={{ borderBottom: '1px solid var(--slate-100)' }}>
+                              <td style={{ padding: '0.75rem 0.5rem', verticalAlign: 'top' }}>
+                                <div style={{ fontWeight: 700, color: 'var(--slate-900)' }}>{fb.userName}</div>
+                                <div style={{ color: 'var(--slate-500)', fontSize: '0.8rem' }}>{fb.userEmail}</div>
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    marginTop: '0.3rem',
+                                    fontSize: '0.7rem',
+                                    padding: '0.15rem 0.45rem',
+                                    borderRadius: '4px',
+                                    fontWeight: 700,
+                                    backgroundColor: fb.userRole === 'recruiter' ? '#eff6ff' : fb.userRole === 'admin' ? '#faf5ff' : '#f1f5f9',
+                                    color: fb.userRole === 'recruiter' ? '#2563eb' : fb.userRole === 'admin' ? '#7e22ce' : '#475569',
+                                  }}
+                                >
+                                  {fb.userRole?.toUpperCase()}
+                                </span>
+                              </td>
+                              <td style={{ padding: '0.75rem 0.5rem', verticalAlign: 'top' }}>
+                                <div style={{ display: 'flex', gap: '2px', alignItems: 'center', marginBottom: '0.35rem' }}>
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      size={14}
+                                      color={fb.rating >= s ? '#f59e0b' : '#cbd5e1'}
+                                      fill={fb.rating >= s ? '#f59e0b' : 'none'}
+                                    />
+                                  ))}
+                                  <span style={{ fontSize: '0.8rem', fontWeight: 700, marginLeft: '0.3rem', color: '#f59e0b' }}>
+                                    {fb.rating}.0
+                                  </span>
+                                </div>
+                                <span
+                                  style={{
+                                    fontSize: '0.72rem',
+                                    padding: '0.2rem 0.5rem',
+                                    borderRadius: '9999px',
+                                    fontWeight: 600,
+                                    backgroundColor:
+                                      fb.category === 'bug'
+                                        ? '#fee2e2'
+                                        : fb.category === 'feature_request'
+                                        ? '#e0e7ff'
+                                        : fb.category === 'ui_ux'
+                                        ? '#fef3c7'
+                                        : '#f1f5f9',
+                                    color:
+                                      fb.category === 'bug'
+                                        ? '#b91c1c'
+                                        : fb.category === 'feature_request'
+                                        ? '#3730a3'
+                                        : fb.category === 'ui_ux'
+                                        ? '#b45309'
+                                        : '#475569',
+                                  }}
+                                >
+                                  {fb.category?.replace('_', ' ').toUpperCase()}
+                                </span>
+                              </td>
+                              <td style={{ padding: '0.75rem 0.5rem', verticalAlign: 'top' }}>
+                                <div style={{ fontWeight: 700, color: 'var(--slate-900)', marginBottom: '0.25rem' }}>
+                                  {fb.subject}
+                                </div>
+                                <div
+                                  style={{
+                                    color: 'var(--slate-700)',
+                                    fontSize: '0.85rem',
+                                    lineHeight: 1.45,
+                                    whiteSpace: 'pre-wrap',
+                                    backgroundColor: 'var(--slate-50)',
+                                    padding: '0.5rem 0.75rem',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--slate-200)',
+                                  }}
+                                >
+                                  {fb.message}
+                                </div>
+                                {fb.pageUrl && (
+                                  <div style={{ marginTop: '0.3rem', fontSize: '0.75rem', color: 'var(--slate-400)' }}>
+                                    Page URL: <code>{fb.pageUrl}</code>
+                                  </div>
+                                )}
+                                {fb.adminNote && (
+                                  <div
+                                    style={{
+                                      marginTop: '0.4rem',
+                                      fontSize: '0.78rem',
+                                      padding: '0.4rem 0.6rem',
+                                      backgroundColor: '#ecfdf5',
+                                      borderLeft: '3px solid #10b981',
+                                      color: '#065f46',
+                                      borderRadius: '4px',
+                                    }}
+                                  >
+                                    <strong>Admin Note:</strong> {fb.adminNote}
+                                  </div>
+                                )}
+                              </td>
+                              <td style={{ padding: '0.75rem 0.5rem', verticalAlign: 'top' }}>
+                                <select
+                                  value={fb.status || 'pending'}
+                                  onChange={(e) => handleUpdateFeedback(fb._id, e.target.value)}
+                                  style={{
+                                    padding: '0.3rem 0.5rem',
+                                    borderRadius: '4px',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 700,
+                                    border: '1px solid var(--slate-300)',
+                                    backgroundColor:
+                                      fb.status === 'resolved'
+                                        ? '#dcfce7'
+                                        : fb.status === 'reviewed'
+                                        ? '#eff6ff'
+                                        : '#fef3c7',
+                                    color:
+                                      fb.status === 'resolved'
+                                        ? '#15803d'
+                                        : fb.status === 'reviewed'
+                                        ? '#1d4ed8'
+                                        : '#b45309',
+                                  }}
+                                >
+                                  <option value="pending">PENDING</option>
+                                  <option value="reviewed">REVIEWED</option>
+                                  <option value="resolved">RESOLVED</option>
+                                </select>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--slate-400)', marginTop: '0.35rem' }}>
+                                  {new Date(fb.createdAt).toLocaleDateString()}
+                                </div>
+                              </td>
+                              <td style={{ padding: '0.75rem 0.5rem', verticalAlign: 'top' }}>
+                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                  <button
+                                    onClick={() => {
+                                      if (activeFeedbackNoteId === fb._id) {
+                                        setActiveFeedbackNoteId(null);
+                                      } else {
+                                        setActiveFeedbackNoteId(fb._id);
+                                        setAdminNoteInput(fb.adminNote || '');
+                                      }
+                                    }}
+                                    className="btn btn-secondary btn-sm"
+                                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                                    title="Add or edit internal admin resolution note"
+                                  >
+                                    {activeFeedbackNoteId === fb._id ? 'Close' : 'Note'}
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteFeedback(fb._id)}
+                                    className="btn btn-secondary btn-sm"
+                                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', color: '#dc2626' }}
+                                    title="Delete spam feedback"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                            {activeFeedbackNoteId === fb._id && (
+                              <tr style={{ backgroundColor: 'var(--slate-50)' }}>
+                                <td colSpan={5} style={{ padding: '0.75rem 1rem' }}>
+                                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                    <input
+                                      type="text"
+                                      value={adminNoteInput}
+                                      onChange={(e) => setAdminNoteInput(e.target.value)}
+                                      placeholder="Write internal admin note or resolution status..."
+                                      style={{
+                                        flex: 1,
+                                        padding: '0.45rem 0.75rem',
+                                        borderRadius: '6px',
+                                        border: '1px solid var(--slate-300)',
+                                        fontSize: '0.85rem',
+                                      }}
+                                    />
+                                    <button
+                                      onClick={() => handleUpdateFeedback(fb._id, undefined, adminNoteInput)}
+                                      className="btn btn-primary btn-sm"
+                                      style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}
+                                    >
+                                      Save Note
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {feedbackTotalPages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginTop: '1.25rem' }}>
+                    <button
+                      onClick={() => setFeedbackPage((p) => Math.max(1, p - 1))}
+                      disabled={feedbackPage <= 1}
+                      className="btn btn-secondary btn-sm"
+                      style={{ padding: '0.35rem 0.75rem' }}
+                    >
+                      <ChevronLeft size={14} /> Previous
+                    </button>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--slate-600)' }}>
+                      Page {feedbackPage} of {feedbackTotalPages}
+                    </span>
+                    <button
+                      onClick={() => setFeedbackPage((p) => Math.min(feedbackTotalPages, p + 1))}
+                      disabled={feedbackPage >= feedbackTotalPages}
+                      className="btn btn-secondary btn-sm"
+                      style={{ padding: '0.35rem 0.75rem' }}
+                    >
+                      Next <ChevronRight size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}

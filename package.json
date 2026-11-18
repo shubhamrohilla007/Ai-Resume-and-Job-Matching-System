@@ -8,9 +8,13 @@
     "dev": "node --watch server.js",
     "dev:client": "npm run dev --prefix client",
     "build:client": "npm run build --prefix client",
-    "build": "npm run build:client",
+    "build": "npm --prefix client install && npm --prefix client run build",
     "seed:admin": "node scripts/createAdmin.js",
-    "test": "node --test tests/acceptance.test.js"
+    "test": "node --test tests/acceptance.test.js tests/next_level_upgrades.test.js",
+    "test:security": "node --test tests/postman_external_security.test.js",
+    "test:auth": "node --test tests/auth_authorization_atlas.test.js",
+    "test:cloud": "node --test tests/cloud_storage_and_atlas.test.js",
+    "test:all": "node --test tests/acceptance.test.js tests/auth_authorization_atlas.test.js tests/postman_external_security.test.js tests/cloud_storage_and_atlas.test.js tests/password_reset_security.test.js"
   },
   "keywords": [
     "ai",

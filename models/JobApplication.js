@@ -52,6 +52,45 @@ const jobApplicationSchema = new mongoose.Schema(
             trim: true,
         },
 
+        matchScore: {
+            type: Number,
+            default: 0,
+            index: true,
+        },
+
+        matchingSkills: {
+            type: [String],
+            default: [],
+        },
+
+        missingSkills: {
+            type: [String],
+            default: [],
+        },
+
+        resumeUrl: {
+            type: String,
+            default: "",
+            trim: true,
+        },
+
+        resumeId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Resume",
+            default: null,
+        },
+
+        recruiterFeedback: {
+            type: String,
+            default: "",
+            trim: true,
+        },
+
+        reviewedAt: {
+            type: Date,
+            default: null,
+        },
+
         status: {
             type: String,
             enum: ["applied", "reviewed", "shortlisted", "rejected"],
