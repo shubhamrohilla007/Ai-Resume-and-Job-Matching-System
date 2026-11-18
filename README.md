@@ -8,8 +8,10 @@
 ## 🌟 Key Features & Architectural Highlights
 
 ### 1. Modern React Single-Page Application (Vite + TypeScript)
-- Fully typed React 18 client located in `client/` built with Vite and Lucide icons.
-- Instant responsive UI with desktop navigation, mobile drawers, inline validation, and toast feedback notifications.
+- Fully typed React 18 client located in `client/` built with Vite, TypeScript, and Lucide icons.
+- **Universal Responsive Design:** Optimized for all screen viewports (Mobile, Tablet, Laptop, and 4K Displays).
+- **Dark / Light Theme Engine:** Dynamic theme toggle with CSS custom properties and persistent user preference in `localStorage`.
+- **Integrated Feedback System:** Built-in floating feedback modal allowing users to submit ratings (1-5 stars) and bug/feature reports directly to the admin dashboard.
 - Serves the compiled production React bundle (`client/dist`) directly from Express in production while supporting Vite proxy workflow during development.
 
 ### 2. Multi-Profession Resume Template System & Live Builder
@@ -23,56 +25,67 @@
 - **Dual-Pane Live Editor:** Split-screen mode with instantaneous template preview, photo upload support, and single-page auto-condenser.
 - **Reliable PDF Export:** Native print styling (`@page { size: A4 }`) allowing one-click **Save as PDF** in any browser.
 
-### 3. Preserved & Improved ATS Resume Analysis
+### 3. Smart Apply Gate & ATS Match Synchronization
+- **Synchronized Scoring Engine:** Dynamic semantic ATS compatibility scoring is strictly synchronized across:
+  - Recommended Jobs Cards
+  - Smart Apply Warning & Tailoring Modal
+  - Recruiter's Candidate Applicant Review & Profile View
+- **Interactive Full Tailored Resume Preview:** Live paper-sheet resume preview modal displaying AI-targeted summary, keyword alignment badges, STAR-formatted bullets, and bridge project proposals before application submission.
+- **Re-application & Score Boost:** Existing applicants who tailor their resume for a position automatically have their profile, skills, and ATS match score synchronized without duplicate application errors.
+
+### 4. Recruiter Management & Automated Candidate Alerts
+- **Recruiter Workflow:** Manage posted jobs, filter candidates by match score (>70%), and review tailored resumes.
+- **Automated Email Notifications (Gmail SMTP):** When a recruiter updates candidate status (`Shortlisted`, `Reviewed`, `Rejected`), the system immediately sends a branded email alert with the recruiter's custom interview notes/feedback.
+
+### 5. Preserved & Improved ATS Resume Analysis
 - Supports PDF and DOC/DOCX resume file uploads (up to 5MB) via Multer, `pdf-parse`, and `mammoth`.
 - **Cloud-Ready Storage:** Uploaded files and photos stream securely to Cloudinary with private signed delivery links.
 - **Gemini AI Integration:** Multi-model cascade (`gemini-flash-lite-latest` → `gemini-1.5-flash` → `gemini-1.5-pro`).
 - **Rule-Based Fallback Engine:** If Gemini API is unreachable or quota is exhausted, the system automatically runs an intelligent rule-based structural ATS audit based on actual parsed text.
 
-### 4. Selective TrustBridge Integration (Scam-Free Jobs & Learning)
+### 6. Selective TrustBridge Integration (Scam-Free Jobs & Learning)
 - **Automated Scam Detection:** Detects upfront fees, payment-to-work scams, unrealistic salaries, and predatory MLMs.
 - **SSRF-Protected Link Validation:** Prevents Server-Side Request Forgery by blocking loopback (`127.0.0.1`), localhost, cloud metadata (`169.254.169.254`), and private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`).
 - **Strict Score Independence:** Job-Match Score (candidate fit) and Job-Trust Score (employer legitimacy) remain completely independent.
 - **Skill-Gap Course Recommendations:** 16 verified 100% free enterprise courses from IBM SkillsBuild, Infosys Springboard, Swayam / NPTEL, Harvard CS50, and Kaggle.
 
-### 5. Dedicated Enterprise Admin Dashboard
-A professional, role-guarded SaaS dashboard with 8 operational modules:
+### 7. Dedicated Enterprise Admin Dashboard
+A professional, role-guarded SaaS dashboard with 9 operational modules:
 1. **Platform Overview:** Real-time metrics for users, jobs, applications, average ATS scores, and 7-day registration/application charts.
 2. **User Management:** Paginated user directory with real-time search, role filter, role reassignment (Candidate / Recruiter / Admin), account active/suspend toggle, and user deletion.
 3. **Recruiter Directory:** Dedicated recruiter monitoring with active listings and applicant tallies.
 4. **Job Moderation & TrustBridge:** Listing management with instant active toggle, trust score audit badges, and trust status overrides (`approved`, `needs-review`, `blocked`).
 5. **Resume & ATS Repository:** Paginated resume catalog with applicant metadata, calculated ATS match score badges, and secure file inspection links.
 6. **Platform Applications:** Application tracker linking candidates, target jobs, recruiter employers, and status.
-7. **Audit Activity Logs:** Tamper-evident admin action logs recording admin identity, target entity, timestamp, IP address, and one-click **Export to CSV**.
-8. **System Diagnostics & Cloud Health:** Live connectivity health check for MongoDB Atlas, Cloudinary storage, Gemini AI, and Gmail SMTP.
+7. **Feedback & Bug Inbox:** Review platform user feedback, ratings (1-5 stars), issue categories, and manage resolution notes.
+8. **Audit Activity Logs:** Tamper-evident admin action logs recording admin identity, target entity, timestamp, IP address, and one-click **Export to CSV**.
+9. **System Diagnostics & Cloud Health:** Live connectivity health check for MongoDB Atlas, Cloudinary storage, Gemini AI, and Gmail SMTP.
 
 ---
 
-## 🔐 How to Log In to the Admin Page
+## 🔐 Admin Account Creation & Management
 
-### 1. Default Admin Credentials
-An administrator account is pre-configured in the database:
-- **Email:** `admin@resumesystem.com`
-- **Password:** `AdminPassword123!`
-- **Role:** `admin`
+To ensure security in production environments, default passwords and administrator credentials are **never hardcoded** in documentation or public configuration.
+
+### 1. Create or Promote an Admin via CLI
+You can initialize an administrator account or elevate an existing user to the `admin` role using the secure CLI script:
+
+```bash
+# Syntax: node scripts/createAdmin.js <email> <password> "<Full Name>"
+node scripts/createAdmin.js your-admin-email@example.com "YourStrongPassword123!" "System Administrator"
+```
+
+Or configure `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ADMIN_NAME` in your `.env` file and run:
+```bash
+npm run seed:admin
+```
 
 ### 2. Login Steps
 1. Start the application (`npm run dev` or `npm start`).
-2. Open your browser and navigate to: **http://localhost:8080/login**
-3. Enter `admin@resumesystem.com` and `AdminPassword123!`.
+2. Navigate to: **`/login`**
+3. Enter your administrator email and chosen password.
 4. Click **Sign In**.
-5. You will be automatically redirected to the **Admin Dashboard** at **`/admin`**.
-6. While logged in as an admin, a dedicated **Admin Panel** link with a shield badge appears in the top navigation bar.
-
-### 3. Create or Promote an Admin Account via CLI
-To create a custom admin or promote an existing account, run:
-```bash
-# Using default credentials:
-npm run seed:admin
-
-# Or with custom email, password, and name:
-node scripts/createAdmin.js your-email@example.com YourSecurePassword123! "Super Admin"
-```
+5. Once authenticated, an **Admin Panel** link with a shield badge will appear in the top navigation bar, granting access to **`/admin`**.
 
 > **Security Note:** Public registration (`/signup`) intentionally restricts roles to `job_seeker` and `recruiter`. The `admin` role can only be assigned through backend CLI seeding or by an existing admin from the Admin Dashboard.
 
@@ -136,7 +149,7 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-flash-lite-latest
 
-# Gmail SMTP for Password Reset Emails
+# Gmail SMTP for Candidate Alerts and Password Reset Emails
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=465
 SMTP_SECURE=true
@@ -162,13 +175,13 @@ AI-Powered-Resume-System/
 ├── client/                               # React + TypeScript + Vite SPA
 │   ├── src/
 │   │   ├── api/client.ts                 # Typed fetch client with credentials & adminApi
-│   │   ├── components/                   # Navbar, Footer, GoogleSignInButton, PasswordInput
-│   │   ├── context/AuthContext.tsx       # Authentication state management
+│   │   ├── components/                   # Navbar, Footer, SmartApplyModal, FeedbackModal, ThemeToggle
+│   │   ├── context/                      # AuthContext.tsx & ThemeContext.tsx
 │   │   ├── features/templates/           # 6 Multi-profession Resume Templates & Renderer
-│   │   ├── pages/                        # Home, Auth, AdminDashboardPage, Dashboard, Builder, ATS, Jobs
-│   │   ├── types/index.ts                # TypeScript interfaces (including Admin & Diagnostics)
+│   │   ├── pages/                        # Home, Auth, AdminDashboard, RecommendedJobs, RecruiterJobs
+│   │   ├── types/index.ts                # TypeScript interfaces (Job, Application, Feedback, Diagnostics)
 │   │   ├── App.tsx                       # React Router configuration & ProtectedRoute
-│   │   ├── index.css                     # Design system & print PDF stylesheet
+│   │   ├── index.css                     # Design system, CSS variables & print PDF stylesheet
 │   │   └── main.tsx                      # Vite React entrypoint
 │   ├── package.json                      # Client dependencies (React 18, Lucide, Router)
 │   ├── tsconfig.json                     # TypeScript configuration
@@ -181,12 +194,13 @@ AI-Powered-Resume-System/
 │
 ├── controllers/
 │   └── api/
-│       ├── adminController.js            # 13 Admin endpoints & AuditLog persistence
+│       ├── adminController.js            # Admin management, metrics & AuditLog persistence
 │       ├── authController.js             # Local & Google auth, password reset, session fixation defense
+│       ├── feedbackController.js         # User feedback submission & admin resolution
 │       ├── profileController.js          # Candidate profile CRUD
 │       ├── resumeController.js           # Cloudinary file upload, ATS analysis, signed links
 │       ├── resumeBuilderController.js    # Multi-template resume builder, photos & AI polish
-│       ├── jobController.js              # Job matching, recruiter posting, TrustBridge audit preview
+│       ├── jobController.js              # Job matching, recruiter posting, ATS match scoring
 │       └── courseController.js           # Verified courses & learning roadmap
 │
 ├── middleware/
@@ -195,14 +209,15 @@ AI-Powered-Resume-System/
 ├── models/
 │   ├── User.js                           # User schema with isActive, roles, reset tokens
 │   ├── AuditLog.js                       # Administrative actions & audit logging model
+│   ├── Feedback.js                       # User ratings, feedback categories & admin resolution
 │   ├── Job.js                            # Job schema with TrustBridge audit fields
-│   ├── JobApplication.js                 # Job application link model
+│   ├── JobApplication.js                 # Job application link model with matchScore & recruiterFeedback
 │   ├── Resume.js                         # Cloudinary resume metadata & ATS scan results
 │   ├── ResumeBuilder.js                  # Multi-profession resume builder data
 │   └── Profile.js                        # Candidate profile model
 │
 ├── routes/
-│   └── api.js                            # Centralized REST API router (including /api/admin)
+│   └── api.js                            # Centralized REST API router (including /api/admin & /api/feedback)
 │
 ├── scripts/
 │   ├── createAdmin.js                    # CLI admin seeder / promoter
@@ -221,11 +236,11 @@ AI-Powered-Resume-System/
 │   ├── auth_authorization_atlas.test.js  # RBAC, self-protection, and Atlas persistence
 │   ├── cloud_storage_and_atlas.test.js   # Cloudinary storage and Atlas cloud database
 │   ├── password_reset_security.test.js   # 16 cryptographic reset token test cases
-│   ├── google_auth_and_forgot_password.test.js # OAuth & Gmail SMTP integration
+│   ├── next_level_upgrades.test.js       # ATS sync, AI role tailoring, and email alerts tests
 │   ├── acceptance.test.js                # Core ATS and TrustBridge tests
 │   └── ats_builder_sync_test.js          # ATS upload to Resume Builder synchronization
 │
-├── app.js                                # Express application setup, security headers, CORS
+├── app.js                                # Express application setup, security headers, CORS, SPA static serve
 ├── server.js                             # Server startup with MongoDB Atlas connection
 ├── package.json                          # Backend scripts and dependencies
 └── README.md                             # Comprehensive project documentation
@@ -246,7 +261,7 @@ npm install --prefix client
 
 ### 2. Seed Admin Account
 ```bash
-npm run seed:admin
+node scripts/createAdmin.js your-admin-email@example.com "YourSecurePassword123!" "Admin Name"
 ```
 
 ### 3. Run in Development Mode
@@ -272,29 +287,32 @@ The Express server serves the production React SPA directly at **http://localhos
 
 ---
 
+## ☁️ Deployment Guide (Render / Railway)
+
+### Deploying to Render.com (Single Web Service)
+1. Push your repository to GitHub.
+2. Create a new **Web Service** on [Render.com](https://render.com).
+3. Connect your GitHub repository.
+4. Configure the service:
+   - **Environment:** `Node`
+   - **Build Command:** `npm run build`
+   - **Start Command:** `npm start`
+5. Under **Environment Variables**, add the variables specified in the `.env` section above (`ATLASDB`, `SESSION_SECRET`, `CLOUDINARY_*`, `GEMINI_API_KEY`, `SMTP_*`, `CLIENT_URL`).
+6. Click **Deploy Web Service**.
+
+---
+
 ## 🧪 Comprehensive Automated Test Suites
 
-The application includes 7 automated verification suites covering security, cloud storage, authentication, and job matching:
+The application includes automated verification suites covering security, cloud storage, authentication, ATS synchronization, and job matching:
 
 ```bash
-# 1. Postman & External Tool Security Penetration Tests
-node --test tests/postman_external_security.test.js
+# Run acceptance and upgrade tests (33 tests)
+npm test
 
-# 2. Authentication, RBAC & MongoDB Atlas Tests
-node --test tests/auth_authorization_atlas.test.js
+# Run external client security audit (SSRF, IDOR, privilege escalation)
+npm run test:security
 
-# 3. Cloudinary Cloud Storage & Atlas Migration Tests
-node --test tests/cloud_storage_and_atlas.test.js
-
-# 4. Password Reset Token Security & SMTP Tests
-node --test tests/password_reset_security.test.js
-
-# 5. Google OAuth 2.0 & SMTP Integration Tests
-node --test tests/google_auth_and_forgot_password.test.js
-
-# 6. Core Acceptance & TrustBridge Fraud Tests
-node --test tests/acceptance.test.js
-
-# 7. ATS & Resume Builder Bidirectional Synchronization Tests
-node tests/ats_builder_sync_test.js
+# Run all test suites
+npm run test:all
 ```
