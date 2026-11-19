@@ -8,7 +8,7 @@
     "dev": "node --watch server.js",
     "dev:client": "npm run dev --prefix client",
     "build:client": "npm run build --prefix client",
-    "build": "npm --prefix client install && npm --prefix client run build",
+    "build": "npm --prefix client install --include=dev && npm --prefix client run build",
     "seed:admin": "node scripts/createAdmin.js",
     "test": "node --test tests/acceptance.test.js tests/next_level_upgrades.test.js",
     "test:security": "node --test tests/postman_external_security.test.js",
