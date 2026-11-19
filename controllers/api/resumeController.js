@@ -357,14 +357,33 @@ module.exports.serveResumeFile = async (req, res) => {
         }
 
         // 1. Cloudinary storage: redirect to signed short-lived URL
-        if (resume.storageProvider === "cloudinary" && resume.cloudinaryPublicId) {
+        if (resume.storageProvider === "cloudinary" && (resume.cloudinaryPublicId || resume.secureUrl || resume.cloudinarySecureUrl)) {
+            const cleanFilename = path.basename(resume.originalName || "resume.pdf").replace(/["'\r\n]/g, "");
+            const ext = path.extname(cleanFilename).toLowerCase();
+
             const signedUrl = cloudinaryService.getSignedResumeInlineUrl(
                 resume.cloudinaryPublicId,
                 resume.resourceType || "raw",
                 resume.originalName,
                 900
-            );
+            ) || resume.cloudinarySecureUrl || resume.secureUrl;
+
             if (signedUrl) {
+                if (ext === ".pdf") {
+                    const client = signedUrl.startsWith("https") ? require("https") : require("http");
+                    return client.get(signedUrl, (remoteRes) => {
+                        if (remoteRes.statusCode >= 300 && remoteRes.statusCode < 400 && remoteRes.headers.location) {
+                            return res.redirect(remoteRes.headers.location);
+                        }
+                        if (remoteRes.statusCode >= 400) {
+                            return res.redirect(signedUrl);
+                        }
+                        res.setHeader("Content-Disposition", `inline; filename="${cleanFilename}"`);
+                        res.setHeader("Content-Type", "application/pdf");
+                        res.setHeader("Cache-Control", "private, no-store");
+                        remoteRes.pipe(res);
+                    }).on("error", () => res.redirect(signedUrl));
+                }
                 res.setHeader("Cache-Control", "private, no-store");
                 return res.redirect(signedUrl);
             }
@@ -405,17 +424,36 @@ module.exports.downloadResumeFile = async (req, res) => {
             });
         }
 
-        // 1. Cloudinary storage: redirect to signed short-lived download URL with attachment flag
-        if (resume.storageProvider === "cloudinary" && resume.cloudinaryPublicId) {
-            const signedDownloadUrl = cloudinaryService.getSignedResumeDownloadUrl(
+        const cleanFilename = path.basename(resume.originalName || "resume.pdf").replace(/["'\r\n]/g, "");
+        const ext = path.extname(cleanFilename).toLowerCase();
+        const mimeType = resume.fileType || (ext === ".pdf" ? "application/pdf" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+
+        // 1. Cloudinary storage: Stream through with exact original filename header so download has proper name and extension
+        if (resume.storageProvider === "cloudinary" && (resume.cloudinaryPublicId || resume.secureUrl || resume.cloudinarySecureUrl)) {
+            const rawDownloadUrl = cloudinaryService.getSignedResumeDownloadUrl(
                 resume.cloudinaryPublicId,
                 resume.resourceType || "raw",
                 resume.originalName,
                 900
-            );
-            if (signedDownloadUrl) {
-                res.setHeader("Cache-Control", "private, no-store");
-                return res.redirect(signedDownloadUrl);
+            ) || resume.cloudinarySecureUrl || resume.secureUrl;
+
+            if (rawDownloadUrl) {
+                const client = rawDownloadUrl.startsWith("https") ? require("https") : require("http");
+                return client.get(rawDownloadUrl, (remoteRes) => {
+                    if (remoteRes.statusCode >= 300 && remoteRes.statusCode < 400 && remoteRes.headers.location) {
+                        return res.redirect(remoteRes.headers.location);
+                    }
+                    if (remoteRes.statusCode >= 400) {
+                        return res.redirect(rawDownloadUrl);
+                    }
+                    res.setHeader("Content-Disposition", `attachment; filename="${cleanFilename}"`);
+                    res.setHeader("Content-Type", mimeType);
+                    res.setHeader("Cache-Control", "private, no-store");
+                    remoteRes.pipe(res);
+                }).on("error", (err) => {
+                    console.warn("Proxy download pipe error, falling back to redirect:", err.message);
+                    return res.redirect(rawDownloadUrl);
+                });
             }
         }
 
@@ -426,7 +464,7 @@ module.exports.downloadResumeFile = async (req, res) => {
 
             if (filePath.startsWith(allowedPrefix) && fs.existsSync(filePath)) {
                 res.setHeader("Cache-Control", "private, no-store");
-                return res.download(filePath, path.basename(resume.originalName || resume.fileName));
+                return res.download(filePath, cleanFilename);
             }
         }
 

@@ -31,6 +31,8 @@ import {
   Key,
   MessageSquare,
   Star,
+  X,
+  Sparkles,
 } from 'lucide-react';
 
 type AdminTab =
@@ -99,6 +101,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [resumes, setResumes] = useState<any[]>([]);
   const [resumePage, setResumePage] = useState(1);
   const [resumeTotalPages, setResumeTotalPages] = useState(1);
+  const [selectedResume, setSelectedResume] = useState<any | null>(null);
 
   // Applications Tab
   const [applications, setApplications] = useState<any[]>([]);
@@ -1222,16 +1225,15 @@ export const AdminDashboardPage: React.FC = () => {
                           {new Date(r.createdAt).toLocaleDateString()}
                         </td>
                         <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right' }}>
-                          <a
-                            href={`/api/resume/file?id=${r.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => setSelectedResume(r)}
                             className="btn btn-secondary"
-                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                           >
                             <Eye size={13} />
-                            View
-                          </a>
+                            View Resume
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -1826,6 +1828,301 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           )}
         </>
+      )}
+
+      {/* Candidate Resume Inspection Modal for Admin */}
+      {selectedResume && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          padding: '1.5rem',
+        }}>
+          <div className="card" style={{
+            maxWidth: '850px',
+            width: '100%',
+            maxHeight: '92vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '1.25rem 1.5rem',
+              borderBottom: '1px solid var(--slate-200)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#fff',
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <FileText size={20} color="var(--primary)" />
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: 'var(--slate-900)' }}>
+                    {selectedResume.candidateName}
+                  </h3>
+                  {selectedResume.atsScore ? (
+                    <span style={{
+                      padding: '0.2rem 0.55rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      backgroundColor: selectedResume.atsScore >= 75 ? '#dcfce7' : selectedResume.atsScore >= 50 ? '#fef3c7' : '#fee2e2',
+                      color: selectedResume.atsScore >= 75 ? '#15803d' : selectedResume.atsScore >= 50 ? '#b45309' : '#b91c1c',
+                    }}>
+                      {selectedResume.atsScore}% ATS Score
+                    </span>
+                  ) : null}
+                </div>
+                <div style={{ fontSize: '0.825rem', color: 'var(--slate-500)', marginTop: '0.25rem' }}>
+                  {selectedResume.candidateEmail} • Uploaded: {new Date(selectedResume.createdAt).toLocaleDateString()} • {selectedResume.originalName} ({formatBytes(selectedResume.fileSize)})
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedResume(null)}
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '0.35rem 0.5rem' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body - Scrollable */}
+            <div style={{ padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* ATS Evaluation & AI Feedback Box */}
+              <div style={{
+                backgroundColor: '#f8fafc',
+                border: '1px solid var(--slate-200)',
+                borderRadius: '8px',
+                padding: '1rem',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--slate-700)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Sparkles size={15} color="var(--primary)" /> ATS Audit & AI Assessment
+                  </span>
+                  {selectedResume.targetRole && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)', backgroundColor: '#eff6ff', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                      Target Role: {selectedResume.targetRole}
+                    </span>
+                  )}
+                </div>
+                {selectedResume.aiFeedback ? (
+                  <p style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.5, color: 'var(--slate-600)' }}>
+                    {selectedResume.aiFeedback}
+                  </p>
+                ) : (
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--slate-400)', fontStyle: 'italic' }}>
+                    No automated feedback comments logged.
+                  </p>
+                )}
+              </div>
+
+              {/* Skills Badges */}
+              {Array.isArray(selectedResume.extractedSkills) && selectedResume.extractedSkills.length > 0 && (
+                <div>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--slate-800)', marginBottom: '0.5rem' }}>
+                    Extracted Technical & Professional Skills ({selectedResume.extractedSkills.length})
+                  </h4>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {selectedResume.extractedSkills.map((sk: string, i: number) => (
+                      <span
+                        key={i}
+                        style={{
+                          fontSize: '0.78rem',
+                          backgroundColor: '#f1f5f9',
+                          color: '#334155',
+                          padding: '0.25rem 0.6rem',
+                          borderRadius: '4px',
+                          border: '1px solid #e2e8f0',
+                        }}
+                      >
+                        {sk}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Professional Summary */}
+              {selectedResume.summary && (
+                <div>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--slate-800)', marginBottom: '0.35rem' }}>
+                    Professional Summary
+                  </h4>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--slate-700)', lineHeight: 1.55, backgroundColor: '#fff', border: '1px solid var(--slate-200)', borderRadius: '6px', padding: '0.75rem', whiteSpace: 'pre-line' }}>
+                    {selectedResume.summary}
+                  </div>
+                </div>
+              )}
+
+              {/* Key Projects */}
+              {Array.isArray(selectedResume.extractedData?.projects) && selectedResume.extractedData.projects.length > 0 && (
+                <div>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--slate-800)', marginBottom: '0.5rem' }}>
+                    Key Projects ({selectedResume.extractedData.projects.length})
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    {selectedResume.extractedData.projects.map((proj: any, idx: number) => (
+                      <div key={idx} style={{ backgroundColor: '#fff', border: '1px solid var(--slate-200)', borderRadius: '6px', padding: '0.75rem' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--slate-900)' }}>
+                          {proj.name} {proj.technologies && <span style={{ fontWeight: 400, color: 'var(--slate-500)', fontSize: '0.78rem' }}>({proj.technologies})</span>}
+                        </div>
+                        {proj.description && (
+                          <div style={{ fontSize: '0.825rem', color: 'var(--slate-700)', marginTop: '0.25rem', whiteSpace: 'pre-line', lineHeight: 1.45 }}>
+                            {proj.description}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Custom Sections / Hackathons */}
+              {Array.isArray(selectedResume.extractedData?.customSections) && selectedResume.extractedData.customSections.length > 0 && (
+                <div>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--slate-800)', marginBottom: '0.5rem' }}>
+                    Additional Achievements & Hackathons
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    {selectedResume.extractedData.customSections.map((sec: any, idx: number) => (
+                      <div key={idx} style={{ backgroundColor: '#fff', border: '1px solid var(--slate-200)', borderRadius: '6px', padding: '0.75rem' }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--primary)' }}>
+                          {sec.title}
+                        </div>
+                        <div style={{ fontSize: '0.825rem', color: 'var(--slate-700)', marginTop: '0.25rem', whiteSpace: 'pre-line', lineHeight: 1.45 }}>
+                          {sec.content || (Array.isArray(sec.items) ? sec.items.join('\n') : '')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Work Experience */}
+              {Array.isArray(selectedResume.extractedData?.experience) && selectedResume.extractedData.experience.length > 0 && (
+                <div>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--slate-800)', marginBottom: '0.5rem' }}>
+                    Work Experience
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    {selectedResume.extractedData.experience.map((exp: any, idx: number) => (
+                      <div key={idx} style={{ backgroundColor: '#fff', border: '1px solid var(--slate-200)', borderRadius: '6px', padding: '0.75rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '0.85rem' }}>
+                          <span>{exp.role} @ {exp.company}</span>
+                          <span style={{ color: 'var(--slate-500)', fontSize: '0.78rem' }}>{exp.duration}</span>
+                        </div>
+                        {exp.description && (
+                          <div style={{ fontSize: '0.825rem', color: 'var(--slate-700)', marginTop: '0.25rem', whiteSpace: 'pre-line', lineHeight: 1.45 }}>
+                            {exp.description}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Education & Credentials */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {Array.isArray(selectedResume.extractedData?.education) && selectedResume.extractedData.education.length > 0 && (
+                  <div>
+                    <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--slate-800)', marginBottom: '0.4rem' }}>
+                      Education
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      {selectedResume.extractedData.education.map((edu: any, idx: number) => (
+                        <div key={idx} style={{ fontSize: '0.8rem', backgroundColor: '#f8fafc', padding: '0.5rem', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ fontWeight: 600 }}>{edu.degree}</div>
+                          <div style={{ color: 'var(--slate-500)' }}>{edu.college} {edu.year ? `(${edu.year})` : ''}</div>
+                          {edu.cgpa && <div style={{ color: 'var(--primary)', fontWeight: 500 }}>CGPA: {edu.cgpa}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {Array.isArray(selectedResume.extractedData?.certifications) && selectedResume.extractedData.certifications.length > 0 && (
+                  <div>
+                    <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--slate-800)', marginBottom: '0.4rem' }}>
+                      Certifications
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      {selectedResume.extractedData.certifications.map((cert: any, idx: number) => (
+                        <div key={idx} style={{ fontSize: '0.8rem', backgroundColor: '#f8fafc', padding: '0.5rem', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ fontWeight: 600 }}>{cert.name}</div>
+                          <div style={{ color: 'var(--slate-500)' }}>{cert.issuer} {cert.year ? `(${cert.year})` : ''}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Raw Parsed Text fallback (collapsible/details) */}
+              {selectedResume.parsedText && (
+                <details style={{ marginTop: '0.5rem', fontSize: '0.825rem', color: 'var(--slate-600)' }}>
+                  <summary style={{ cursor: 'pointer', fontWeight: 600, color: 'var(--slate-700)' }}>
+                    View Raw Extracted Document Text
+                  </summary>
+                  <pre style={{
+                    marginTop: '0.5rem',
+                    padding: '0.75rem',
+                    backgroundColor: '#0f172a',
+                    color: '#e2e8f0',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    whiteSpace: 'pre-wrap',
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                  }}>
+                    {selectedResume.parsedText}
+                  </pre>
+                </details>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '1rem 1.5rem',
+              borderTop: '1px solid var(--slate-200)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#fff',
+            }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--slate-400)' }}>
+                Storage: {selectedResume.storageProvider === 'cloudinary' ? 'Cloudinary Secured' : 'Local Storage'}
+              </span>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <a
+                  href={`/api/resume/download?id=${selectedResume.id}`}
+                  className="btn btn-secondary btn-sm"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <Download size={14} /> Download Original Document ({selectedResume.originalName})
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setSelectedResume(null)}
+                  className="btn btn-primary btn-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
