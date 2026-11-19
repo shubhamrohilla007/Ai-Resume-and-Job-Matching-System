@@ -500,7 +500,7 @@ module.exports.getGoogleAuthStatus = (req, res) => {
 module.exports.googleAuth = (req, res, next) => {
     const googleClientId = process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.trim() : "";
     const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ? process.env.GOOGLE_CLIENT_SECRET.trim() : "";
-    const frontendBaseUrl = getFrontendBaseUrl();
+    const frontendBaseUrl = getFrontendBaseUrl(req);
 
     if (!googleClientId || !googleClientSecret) {
         console.warn("[Google OAuth Warning] Attempted Google Sign-In but GOOGLE_CLIENT_ID/SECRET are missing in .env.");
@@ -520,7 +520,7 @@ module.exports.googleAuth = (req, res, next) => {
 
 // Google OAuth Callback
 module.exports.googleCallback = (req, res, next) => {
-    const frontendBaseUrl = getFrontendBaseUrl();
+    const frontendBaseUrl = getFrontendBaseUrl(req);
 
     // Catch OAuth denial, cancellation, or missing code immediately
     if (req.query.error || !req.query.code) {

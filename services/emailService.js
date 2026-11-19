@@ -48,12 +48,15 @@ function isSmtpConfigured() {
 /**
  * Get configured frontend URL for password reset links
  */
-function getFrontendBaseUrl() {
-    return (
-        process.env.FRONTEND_URL ||
-        process.env.CLIENT_URL ||
-        "http://localhost:5173"
-    ).replace(/\/+$/, "");
+function getFrontendBaseUrl(req) {
+    if (process.env.FRONTEND_URL) return process.env.FRONTEND_URL.trim().replace(/\/+$/, "");
+    if (process.env.CLIENT_URL) return process.env.CLIENT_URL.trim().replace(/\/+$/, "");
+    if (process.env.BACKEND_URL) return process.env.BACKEND_URL.trim().replace(/\/+$/, "");
+    if (req && req.headers && req.headers.host) {
+        const proto = req.headers["x-forwarded-proto"] || req.protocol || "https";
+        return `${proto}://${req.headers.host}`.replace(/\/+$/, "");
+    }
+    return (process.env.NODE_ENV === "production" ? "" : "http://localhost:5173").replace(/\/+$/, "");
 }
 
 /**
