@@ -882,3 +882,32 @@ module.exports.getSystemHealth = async (req, res) => {
         return res.status(500).json({ success: false, message: "Unable to retrieve system health." });
     }
 };
+
+/**
+ * 23. Trigger Storage Cleanup for Expired / Unlinked Trial Resumes
+ */
+module.exports.runStorageCleanup = async (req, res) => {
+    try {
+        const { cleanupExpiredOrphanedResumes } = require("../../services/storageCleanupService");
+        const retentionDays = parseInt(req.body?.retentionDays || req.query?.retentionDays || "30", 10);
+
+        const result = await cleanupExpiredOrphanedResumes({ retentionDays });
+
+        await logAdminActivity(
+            req,
+            "STORAGE_CLEANUP",
+            "Resume",
+            "",
+            `Purged ${result.purgedCount} orphaned resumes (${Math.round(result.bytesFreed / 1024)} KB freed, ${result.preservedCount} preserved)`
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: `Storage cleanup completed: ${result.purgedCount} unlinked trial resumes purged, ${result.preservedCount} applied resumes preserved.`,
+            stats: result,
+        });
+    } catch (err) {
+        console.error("Admin runStorageCleanup error:", err);
+        return res.status(500).json({ success: false, message: "Failed to execute storage cleanup." });
+    }
+};

@@ -715,12 +715,13 @@ module.exports.deletePhoto = async (req, res) => {
 // Optimize Resume for One-Page Mode
 module.exports.optimizeOnePage = async (req, res) => {
     try {
-        const { summary = "", experience = [], projects = [], skills = [], targetRole = "" } = req.body;
+        const { summary = "", experience = [], projects = [], customSections = [], skills = [], targetRole = "" } = req.body;
 
         const result = await aiService.optimizeResumeForOnePage({
             summary,
             experience,
             projects,
+            customSections,
             skills,
             targetRole,
         });

@@ -1,9 +1,12 @@
 import React from 'react';
 import { ResumeBuilderData } from '../../types';
+import { splitCustomSections, renderCustomSectionLines } from './templateUtils';
 
 export const TechModernTemplate: React.FC<{ resume: ResumeBuilderData }> = ({ resume }) => {
   const { personal, summary, education, skills, experience, projects, certifications, customSections } = resume;
   const isOnePage = resume.pageMode === 'one-page';
+
+  const { projectLike: projectLikeSections, others: otherCustomSections } = splitCustomSections(customSections);
 
   return (
     <div
@@ -313,6 +316,33 @@ export const TechModernTemplate: React.FC<{ resume: ResumeBuilderData }> = ({ re
         </section>
       )}
 
+      {/* Project-like Custom Sections (Hackathons, Competitions, Publications) */}
+      {projectLikeSections &&
+        projectLikeSections.length > 0 &&
+        projectLikeSections.map((sec, i) => (
+          <section
+            key={`proj-custom-${i}`}
+            className="resume-section"
+            style={{ marginBottom: isOnePage ? '10px' : '14px' }}
+          >
+            <h2
+              className="resume-section-heading"
+              style={{
+                fontSize: isOnePage ? '9.5pt' : '10.5pt',
+                fontWeight: '700',
+                color: '#2563eb',
+                textTransform: 'uppercase',
+                borderBottom: '1px solid #e2e8f0',
+                paddingBottom: '3px',
+                marginBottom: isOnePage ? '5px' : '8px',
+              }}
+            >
+              {sec.title}
+            </h2>
+            {renderCustomSectionLines(sec.content, sec.items, { isOnePage, primaryColor: '#0f172a', textColor: '#475569', metaColor: '#2563eb' })}
+          </section>
+        ))}
+
       {/* Education & Certifications Row */}
       <div
         style={{
@@ -390,11 +420,12 @@ export const TechModernTemplate: React.FC<{ resume: ResumeBuilderData }> = ({ re
         )}
       </div>
 
-      {/* Custom Sections */}
-      {customSections &&
-        customSections.map((sec, i) => (
+      {/* Other Custom Sections (Awards, Volunteering, Leadership, etc.) */}
+      {otherCustomSections &&
+        otherCustomSections.length > 0 &&
+        otherCustomSections.map((sec, i) => (
           <section
-            key={i}
+            key={`other-custom-${i}`}
             className="resume-section"
             style={{ marginBottom: isOnePage ? '10px' : '14px' }}
           >
@@ -412,25 +443,7 @@ export const TechModernTemplate: React.FC<{ resume: ResumeBuilderData }> = ({ re
             >
               {sec.title}
             </h2>
-            {sec.content && (
-              <p style={{ margin: 0, whiteSpace: 'pre-line', fontSize: isOnePage ? '9pt' : '9.5pt' }}>
-                {sec.content}
-              </p>
-            )}
-            {sec.items && (
-              <ul
-                style={{
-                  paddingLeft: '18px',
-                  marginTop: '3px',
-                  marginBottom: 0,
-                  fontSize: isOnePage ? '8.5pt' : '9pt',
-                }}
-              >
-                {sec.items.map((it, idx) => (
-                  <li key={idx}>{it}</li>
-                ))}
-              </ul>
-            )}
+            {renderCustomSectionLines(sec.content, sec.items, { isOnePage, primaryColor: '#0f172a', textColor: '#475569', metaColor: '#2563eb' })}
           </section>
         ))}
     </div>

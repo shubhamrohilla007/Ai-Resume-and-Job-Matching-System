@@ -113,6 +113,8 @@ export const resumeApi = {
   getResumesList: () => api.get('/resume/list'),
   getFileUrl: (id?: string) => `${API_BASE_URL}/resume/file${id ? `?id=${encodeURIComponent(id)}` : ''}`,
   getDownloadUrl: (id?: string) => `${API_BASE_URL}/resume/download${id ? `?id=${encodeURIComponent(id)}` : ''}`,
+  deleteResume: (id: string) => api.delete(`/resume/${encodeURIComponent(id)}`),
+  cleanOldResumes: () => api.post('/resume/clean-old'),
 };
 
 export const builderApi = {
@@ -135,7 +137,7 @@ export const builderApi = {
     const query = resumeId ? `?resumeId=${encodeURIComponent(resumeId)}` : '';
     return api.delete(`/resume-builder/photo${query}`);
   },
-  optimizeOnePage: (data: { summary?: string; experience?: any[]; projects?: any[]; skills?: string[]; targetRole?: string }) =>
+  optimizeOnePage: (data: { summary?: string; experience?: any[]; projects?: any[]; customSections?: any[]; skills?: string[]; targetRole?: string }) =>
     api.post('/resume-builder/optimize-one-page', data),
   tailorResume: (data: {
     jobId?: string;

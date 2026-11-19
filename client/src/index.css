@@ -1575,21 +1575,21 @@ button, input, select, textarea {
 
 /* One-Page Mode Tightened Styles */
 .print-sheet.one-page-mode {
-  padding: 24px 32px !important;
-  font-size: 9.5pt !important;
-  line-height: 1.38 !important;
+  padding: 18px 26px !important;
+  font-size: 8.5pt !important;
+  line-height: 1.25 !important;
 }
 
 .print-sheet.one-page-mode section,
 .print-sheet.one-page-mode .resume-section {
-  margin-bottom: 10px !important;
+  margin-bottom: 5px !important;
 }
 
 .print-sheet.one-page-mode .resume-section-heading,
 .print-sheet.one-page-mode h2 {
-  margin-bottom: 4px !important;
-  padding-bottom: 2px !important;
-  font-size: 10.5pt !important;
+  margin-bottom: 2px !important;
+  padding-bottom: 1px !important;
+  font-size: 9.5pt !important;
 }
 
 .print-sheet.one-page-mode .resume-item,
@@ -1597,7 +1597,7 @@ button, input, select, textarea {
 .print-sheet.one-page-mode .resume-project-item,
 .print-sheet.one-page-mode .resume-education-item,
 .print-sheet.one-page-mode .resume-cert-item {
-  margin-bottom: 6px !important;
+  margin-bottom: 3px !important;
 }
 
 @media (max-width: 640px) {
@@ -1721,8 +1721,8 @@ button, input, select, textarea {
 
   /* One Page Mode Print Restrictions */
   .print-sheet.one-page-mode {
-    max-height: 275mm !important;
-    overflow: hidden !important;
+    font-size: 8.5pt !important;
+    line-height: 1.25 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     page-break-after: avoid !important;
@@ -1730,10 +1730,10 @@ button, input, select, textarea {
   }
 
   .print-sheet.one-page-mode .resume-section {
-    margin-bottom: 8px !important;
+    margin-bottom: 4px !important;
   }
 
   .print-sheet.one-page-mode .resume-item {
-    margin-bottom: 5px !important;
+    margin-bottom: 2px !important;
   }
 }

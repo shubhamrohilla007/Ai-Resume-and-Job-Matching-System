@@ -1,10 +1,13 @@
 import React from 'react';
 import { ResumeBuilderData } from '../../types';
+import { splitCustomSections, renderCustomSectionLines } from './templateUtils';
 import { User, Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
 
 export const ProfessionalPhotoTemplate: React.FC<{ resume: ResumeBuilderData }> = ({ resume }) => {
   const { personal, summary, education, skills, experience, projects, certifications, customSections, targetRole } = resume;
   const isOnePage = resume.pageMode === 'one-page';
+
+  const { projectLike: projectLikeSections, others: otherCustomSections } = splitCustomSections(customSections);
 
   // Get initials for placeholder
   const getInitials = (name?: string) => {
@@ -416,6 +419,39 @@ export const ProfessionalPhotoTemplate: React.FC<{ resume: ResumeBuilderData }> 
         </section>
       )}
 
+            {/* Project-like Custom Sections (Hackathons, Competitions, Publications) */}
+      {projectLikeSections &&
+        projectLikeSections.length > 0 &&
+        projectLikeSections.map((sec, i) => (
+          <section
+            key={`proj-custom-${i}`}
+            className="resume-section"
+            style={{ marginBottom: isOnePage ? '8px' : '12px' }}
+          >
+            <h2
+              className="resume-section-heading"
+              style={{
+                fontSize: isOnePage ? '10.5pt' : '11.5pt',
+                fontWeight: 700,
+                color: '#1e293b',
+                textTransform: 'uppercase',
+                letterSpacing: '0.6px',
+                borderBottom: '1.5px solid #cbd5e1',
+                paddingBottom: '3px',
+                marginBottom: isOnePage ? '5px' : '8px',
+              }}
+            >
+              {sec.title}
+            </h2>
+            {renderCustomSectionLines(sec.content, sec.items, {
+              isOnePage,
+              primaryColor: '#0f172a',
+              textColor: '#334155',
+              metaColor: '#2563eb',
+            })}
+          </section>
+        ))}
+
       {/* ========================================================
           5. EDUCATION & CERTIFICATIONS (Side-by-Side or Stacked)
           ======================================================== */}
@@ -501,44 +537,38 @@ export const ProfessionalPhotoTemplate: React.FC<{ resume: ResumeBuilderData }> 
         )}
       </div>
 
-      {/* ========================================================
-          6. CUSTOM SECTIONS
-          ======================================================== */}
-      {customSections && customSections.length > 0 && customSections.map((sec, i) => (
-        <section
-          key={i}
-          className="resume-section"
-          style={{ marginBottom: isOnePage ? '8px' : '12px' }}
-        >
-          <h2
-            className="resume-section-heading"
-            style={{
-              fontSize: isOnePage ? '10.5pt' : '11.5pt',
-              fontWeight: 700,
-              color: '#1e293b',
-              textTransform: 'uppercase',
-              letterSpacing: '0.6px',
-              borderBottom: '1.5px solid #cbd5e1',
-              paddingBottom: '3px',
-              marginBottom: isOnePage ? '5px' : '8px',
-            }}
+      {/* Other Custom Sections (Awards, Volunteering, Leadership, etc.) */}
+      {otherCustomSections &&
+        otherCustomSections.length > 0 &&
+        otherCustomSections.map((sec, i) => (
+          <section
+            key={`other-custom-${i}`}
+            className="resume-section"
+            style={{ marginBottom: isOnePage ? '8px' : '12px' }}
           >
-            {sec.title}
-          </h2>
-          {sec.content && (
-            <p style={{ margin: 0, color: '#334155', whiteSpace: 'pre-line' }}>
-              {sec.content}
-            </p>
-          )}
-          {sec.items && sec.items.length > 0 && (
-            <ul style={{ paddingLeft: '20px', marginTop: '4px', marginBottom: 0 }}>
-              {sec.items.map((item, idx) => (
-                <li key={idx} style={{ color: '#334155' }}>{item}</li>
-              ))}
-            </ul>
-          )}
-        </section>
-      ))}
+            <h2
+              className="resume-section-heading"
+              style={{
+                fontSize: isOnePage ? '10.5pt' : '11.5pt',
+                fontWeight: 700,
+                color: '#1e293b',
+                textTransform: 'uppercase',
+                letterSpacing: '0.6px',
+                borderBottom: '1.5px solid #cbd5e1',
+                paddingBottom: '3px',
+                marginBottom: isOnePage ? '5px' : '8px',
+              }}
+            >
+              {sec.title}
+            </h2>
+            {renderCustomSectionLines(sec.content, sec.items, {
+              isOnePage,
+              primaryColor: '#0f172a',
+              textColor: '#334155',
+              metaColor: '#2563eb',
+            })}
+          </section>
+        ))}
     </div>
   );
 };

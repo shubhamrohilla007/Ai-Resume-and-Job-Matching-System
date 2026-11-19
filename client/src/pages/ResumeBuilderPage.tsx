@@ -51,7 +51,14 @@ export const ResumeBuilderPage: React.FC = () => {
   // AI 1-Page Optimizer State
   const [showOnePageModal, setShowOnePageModal] = useState(false);
   const [onePageOptimizing, setOnePageOptimizing] = useState(false);
-  const [optimizedDraft, setOptimizedDraft] = useState<{ summary?: string; experience?: ExperienceItem[]; projects?: ProjectItem[]; isFallback?: boolean } | null>(null);
+  const [optimizedDraft, setOptimizedDraft] = useState<{
+    summary?: string;
+    experience?: ExperienceItem[];
+    projects?: ProjectItem[];
+    customSections?: any[];
+    isFallback?: boolean;
+  } | null>(null);
+  const [isOptimizedApplied, setIsOptimizedApplied] = useState(false);
 
   // Skills Editor Mode (Categorized rows vs Flat chips)
   const [skillsMode, setSkillsMode] = useState<'categorized' | 'flat'>('categorized');
@@ -331,6 +338,7 @@ export const ResumeBuilderPage: React.FC = () => {
         summary: resume.summary,
         experience: resume.experience,
         projects: resume.projects,
+        customSections: resume.customSections,
         skills: resume.skills,
         targetRole: resume.targetRole,
       });
@@ -361,20 +369,25 @@ export const ResumeBuilderPage: React.FC = () => {
       projects: Array.isArray(optimizedDraft.projects) && optimizedDraft.projects.length > 0
         ? optimizedDraft.projects
         : prev.projects,
+      customSections: Array.isArray(optimizedDraft.customSections) && optimizedDraft.customSections.length > 0
+        ? optimizedDraft.customSections
+        : prev.customSections,
     }));
 
+    setIsOptimizedApplied(true);
     setShowOnePageModal(false);
     setSuccessMsg('Concise 1-page resume wording applied successfully!');
     setTimeout(() => setSuccessMsg(null), 3500);
   };
 
   // Check if content exceeds 1 standard page limits
-  const isContentLengthExceeded = (resume.pageMode === 'one-page') && (
+  const isContentLengthExceeded = !isOptimizedApplied && (resume.pageMode === 'one-page') && (
     (resume.summary?.length || 0) > 350 ||
     (resume.experience?.length || 0) > 3 ||
     (resume.projects?.length || 0) > 3 ||
-    (resume.skills?.length || 0) > 16 ||
-    (resume.certifications?.length || 0) > 4
+    (skillsMode === 'flat' ? (resume.skills?.length || 0) > 18 : (resume.skills?.length || 0) > 8) ||
+    (resume.certifications?.length || 0) > 5 ||
+    (resume.customSections?.length || 0) > 3
   );
 
   // Handlers for array mutations
@@ -1387,13 +1400,34 @@ export const ResumeBuilderPage: React.FC = () => {
 
             {/* 8. Custom Sections */}
             <div className="card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                 <h2 className="card-title" style={{ fontSize: '1.1rem' }}>
-                  8. Custom Sections ({resume.customSections.length})
+                  8. Custom & Profession Sections ({resume.customSections.length})
                 </h2>
                 <button type="button" onClick={addCustomSection} className="btn btn-secondary btn-sm">
-                  <Plus size={14} /> Add Section
+                  <Plus size={14} /> Add Custom Section
                 </button>
+              </div>
+
+              {/* Quick Preset Badges for Multi-Profession Sections */}
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1rem', padding: '0.5rem 0.75rem', background: 'var(--slate-50)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--slate-200)' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--slate-500)', fontWeight: 600 }}>Quick Presets:</span>
+                {['Hackathons', 'Publications', 'Clinical Rotations', 'Conferences & Workshops', 'Awards & Honors', 'Volunteer Work', 'Moot Courts'].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => {
+                      setResume((prev) => ({
+                        ...prev,
+                        customSections: [...prev.customSections, { title: preset, content: '', items: [] }],
+                      }));
+                    }}
+                    className="badge"
+                    style={{ cursor: 'pointer', background: '#ffffff', color: 'var(--slate-700)', border: '1px solid var(--slate-300)', padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                  >
+                    + {preset}
+                  </button>
+                ))}
               </div>
 
               {resume.customSections.map((sec, i) => (
@@ -1714,6 +1748,38 @@ export const ResumeBuilderPage: React.FC = () => {
                         lineHeight: 1.5,
                       }}>
                         {proj.description}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Proposed Custom Sections (Hackathons, Competitions, etc.) */}
+            {Array.isArray(optimizedDraft.customSections) && optimizedDraft.customSections.length > 0 && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.35rem', color: 'var(--slate-800)' }}>
+                  4. Concise Additional Sections (Hackathons, Competitions)
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {optimizedDraft.customSections.map((sec, i) => (
+                    <div key={i} style={{ background: '#F8FAFC', border: '1px solid var(--slate-200)', borderRadius: 'var(--radius-sm)', padding: '0.75rem' }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--slate-900)', marginBottom: '0.25rem' }}>
+                        {sec.title}
+                      </div>
+                      <pre style={{
+                        margin: 0,
+                        fontSize: '0.8rem',
+                        fontFamily: 'inherit',
+                        whiteSpace: 'pre-wrap',
+                        color: '#15803D',
+                        background: '#F0FDF4',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '4px',
+                        border: '1px solid #DCFCE7',
+                        lineHeight: 1.5,
+                      }}>
+                        {sec.content || (Array.isArray(sec.items) ? sec.items.join('\n') : '')}
                       </pre>
                     </div>
                   ))}

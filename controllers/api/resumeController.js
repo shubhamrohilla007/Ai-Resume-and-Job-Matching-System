@@ -9,6 +9,7 @@ const extractResumeText = require("../../services/parser/resumeParser");
 const analyzeResume = require("../../services/ai/geminiService");
 const extractStructuredResume = require("../../services/parser/resumeStructuredExtractor");
 const cloudinaryService = require("../../services/cloudinaryService");
+const { purgeObsoleteUserResumes } = require("../../services/storageCleanupService");
 
 const UPLOAD_DIR = path.resolve(__dirname, "../../uploads/resumes");
 
@@ -106,14 +107,38 @@ module.exports.uploadResume = async (req, res) => {
         // 3. Extract structured resume data for Resume Builder synchronization
         const structuredData = await extractStructuredResume(parsedText, aiResult, req.file.originalname);
 
-        // 4. Upload file to Cloudinary (or local fallback if Cloudinary credentials unset)
+        // 4. Ephemeral / Quick ATS Check Mode: If mode=preview, return score without saving to Cloud or DB
+        const isPreviewMode = req.query.mode === "preview" || req.body.mode === "preview";
+        if (isPreviewMode) {
+            return res.status(200).json({
+                success: true,
+                previewOnly: true,
+                message: "ATS analysis completed in ephemeral mode (0 cloud storage used).",
+                analysis: {
+                    atsScore: aiResult.atsScore || 0,
+                    aiFeedback: aiResult.feedback || "",
+                    summary: aiResult.summary || "",
+                    extractedSkills: aiResult.skills || [],
+                    missingSkills: aiResult.missingSkills || [],
+                    strengths: aiResult.strengths || [],
+                    weaknesses: aiResult.weaknesses || [],
+                    recommendedJobs: aiResult.recommendedJobs || [],
+                    extractedData: structuredData,
+                },
+            });
+        }
+
+        // 5. Pre-Upload Purge: Clean up obsolete prior resumes for this user, strictly protecting any linked to active JobApplications
+        await purgeObsoleteUserResumes(req.user._id, { keepRecentCount: 0 });
+
+        // 6. Upload file to Cloudinary (or local fallback if Cloudinary credentials unset)
         const cloudUpload = await cloudinaryService.uploadResumeStream(
             fileBuffer,
             req.file.originalname,
             req.user._id
         );
 
-        // 5. Create new Resume record
+        // 7. Create new Resume record
         const resume = new Resume({
             user: req.user._id,
             originalName: req.file.originalname,
@@ -141,7 +166,7 @@ module.exports.uploadResume = async (req, res) => {
 
         await resume.save();
 
-        // 6. Create and synchronize associated ResumeBuilder document
+        // 8. Update or synchronize associated ResumeBuilder document (prevents duplicate orphaned docs)
         const candidatePersonal = {
             fullName: structuredData.personal?.fullName || req.user.fullName || "",
             email: structuredData.personal?.email || req.user.email || "",
@@ -153,25 +178,40 @@ module.exports.uploadResume = async (req, res) => {
             photoUrl: "",
         };
 
-        const resumeBuilderDoc = new ResumeBuilder({
-            user: req.user._id,
-            sourceResume: resume._id,
-            sourceOriginalName: req.file.originalname,
-            templateId: "ats-classic",
-            careerCategory: "tech",
-            targetRole: structuredData.targetRole || (Array.isArray(aiResult.recommendedJobs) ? aiResult.recommendedJobs[0] : "") || "",
-            pageMode: "multi-page",
-            personal: candidatePersonal,
-            summary: structuredData.summary || aiResult.summary || "",
-            skills: Array.isArray(structuredData.skills) ? structuredData.skills : [],
-            experience: Array.isArray(structuredData.experience) ? structuredData.experience : [],
-            projects: Array.isArray(structuredData.projects) ? structuredData.projects : [],
-            education: Array.isArray(structuredData.education) ? structuredData.education : [],
-            certifications: Array.isArray(structuredData.certifications) ? structuredData.certifications : [],
-            customSections: Array.isArray(structuredData.customSections) ? structuredData.customSections : [],
-        });
-
-        await resumeBuilderDoc.save();
+        let resumeBuilderDoc = await ResumeBuilder.findOne({ user: req.user._id });
+        if (resumeBuilderDoc) {
+            resumeBuilderDoc.sourceResume = resume._id;
+            resumeBuilderDoc.sourceOriginalName = req.file.originalname;
+            resumeBuilderDoc.targetRole = structuredData.targetRole || (Array.isArray(aiResult.recommendedJobs) ? aiResult.recommendedJobs[0] : "") || resumeBuilderDoc.targetRole || "";
+            resumeBuilderDoc.personal = candidatePersonal;
+            resumeBuilderDoc.summary = structuredData.summary || aiResult.summary || resumeBuilderDoc.summary || "";
+            resumeBuilderDoc.skills = Array.isArray(structuredData.skills) && structuredData.skills.length > 0 ? structuredData.skills : resumeBuilderDoc.skills;
+            resumeBuilderDoc.experience = Array.isArray(structuredData.experience) && structuredData.experience.length > 0 ? structuredData.experience : resumeBuilderDoc.experience;
+            resumeBuilderDoc.projects = Array.isArray(structuredData.projects) && structuredData.projects.length > 0 ? structuredData.projects : resumeBuilderDoc.projects;
+            resumeBuilderDoc.education = Array.isArray(structuredData.education) && structuredData.education.length > 0 ? structuredData.education : resumeBuilderDoc.education;
+            resumeBuilderDoc.certifications = Array.isArray(structuredData.certifications) && structuredData.certifications.length > 0 ? structuredData.certifications : resumeBuilderDoc.certifications;
+            resumeBuilderDoc.customSections = Array.isArray(structuredData.customSections) && structuredData.customSections.length > 0 ? structuredData.customSections : resumeBuilderDoc.customSections;
+            await resumeBuilderDoc.save();
+        } else {
+            resumeBuilderDoc = new ResumeBuilder({
+                user: req.user._id,
+                sourceResume: resume._id,
+                sourceOriginalName: req.file.originalname,
+                templateId: "ats-classic",
+                careerCategory: "tech",
+                targetRole: structuredData.targetRole || (Array.isArray(aiResult.recommendedJobs) ? aiResult.recommendedJobs[0] : "") || "",
+                pageMode: "multi-page",
+                personal: candidatePersonal,
+                summary: structuredData.summary || aiResult.summary || "",
+                skills: Array.isArray(structuredData.skills) ? structuredData.skills : [],
+                experience: Array.isArray(structuredData.experience) ? structuredData.experience : [],
+                projects: Array.isArray(structuredData.projects) ? structuredData.projects : [],
+                education: Array.isArray(structuredData.education) ? structuredData.education : [],
+                certifications: Array.isArray(structuredData.certifications) ? structuredData.certifications : [],
+                customSections: Array.isArray(structuredData.customSections) ? structuredData.customSections : [],
+            });
+            await resumeBuilderDoc.save();
+        }
 
         // Link back to Resume document
         resume.resumeBuilderId = resumeBuilderDoc._id;
@@ -443,6 +483,24 @@ module.exports.deleteResume = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Failed to delete resume.",
+        });
+    }
+};
+
+// Purge older unlinked resumes for current user, keeping only the 1 latest active resume
+module.exports.cleanOldResumes = async (req, res) => {
+    try {
+        const result = await purgeObsoleteUserResumes(req.user._id, { keepRecentCount: 1 });
+        return res.json({
+            success: true,
+            message: `Cleanup completed: ${result.purgedCount} older resume version(s) purged.`,
+            stats: result,
+        });
+    } catch (err) {
+        console.error("cleanOldResumes error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to purge older resumes.",
         });
     }
 };

@@ -59,11 +59,16 @@ router.put("/profile", requireAuth, requireAnyRole(["job_seeker", "recruiter", "
 // Resume Upload & ATS Analysis Endpoints
 // ==========================================
 router.post("/resume/upload", requireAuth, requireRole("job_seeker"), upload.single("resume"), resumeController.uploadResume);
+router.post("/resume/analyze-only", requireAuth, requireRole("job_seeker"), upload.single("resume"), (req, res, next) => {
+    req.query.mode = "preview";
+    return resumeController.uploadResume(req, res, next);
+});
 router.get("/resume/analysis", requireAuth, requireRole("job_seeker"), resumeController.getAnalysis);
 router.get("/resume/list", requireAuth, requireRole("job_seeker"), resumeController.getResumesList);
 router.get("/resume/file", requireAuth, requireAnyRole(["job_seeker", "recruiter", "admin"]), resumeController.serveResumeFile);
 router.get("/resume/download", requireAuth, requireAnyRole(["job_seeker", "recruiter", "admin"]), resumeController.downloadResumeFile);
 router.delete("/resume/:id", requireAuth, requireRole("job_seeker"), resumeController.deleteResume);
+router.post("/resume/clean-old", requireAuth, requireRole("job_seeker"), resumeController.cleanOldResumes);
 
 // ==========================================
 // Resume Builder & AI Generator Endpoints
@@ -131,5 +136,6 @@ router.get("/admin/resumes", requireAuth, requireRole("admin"), adminController.
 router.get("/admin/applications", requireAuth, requireRole("admin"), adminController.getApplications);
 router.get("/admin/logs", requireAuth, requireRole("admin"), adminController.getActivityLogs);
 router.get("/admin/system-health", requireAuth, requireRole("admin"), adminController.getSystemHealth);
+router.post("/admin/storage/cleanup", requireAuth, requireRole("admin"), adminController.runStorageCleanup);
 
 module.exports = router;

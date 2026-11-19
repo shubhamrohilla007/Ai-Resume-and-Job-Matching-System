@@ -54,7 +54,7 @@ app.use(
 );
 
 // Health check endpoint for Cloud monitoring & load balancers (Render, Railway)
-app.get("/health", (req, res) => {
+app.get(["/health", "/healthz"], (req, res) => {
     res.status(200).json({
         status: "healthy",
         uptime: process.uptime(),

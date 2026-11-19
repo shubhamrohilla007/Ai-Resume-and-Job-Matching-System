@@ -1,9 +1,12 @@
 import React from 'react';
 import { ResumeBuilderData } from '../../types';
+import { splitCustomSections, renderCustomSectionLines } from './templateUtils';
 
 export const AcademicCvTemplate: React.FC<{ resume: ResumeBuilderData }> = ({ resume }) => {
   const { personal, summary, education, skills, experience, projects, certifications, customSections } = resume;
   const isOnePage = resume.pageMode === 'one-page';
+
+  const { projectLike: projectLikeSections, others: otherCustomSections } = splitCustomSections(customSections);
 
   return (
     <div
@@ -269,6 +272,38 @@ export const AcademicCvTemplate: React.FC<{ resume: ResumeBuilderData }> = ({ re
         </section>
       )}
 
+            {/* Project-like Custom Sections (Publications, Conferences, Hackathons, Research) */}
+      {projectLikeSections &&
+        projectLikeSections.length > 0 &&
+        projectLikeSections.map((sec, i) => (
+          <section
+            key={`proj-custom-${i}`}
+            className="resume-section"
+            style={{ marginBottom: isOnePage ? '10px' : '15px' }}
+          >
+            <h2
+              className="resume-section-heading"
+              style={{
+                fontSize: isOnePage ? '10pt' : '11pt',
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                borderBottom: '1px solid #a8a29e',
+                paddingBottom: '2px',
+                marginBottom: isOnePage ? '4px' : '6px',
+              }}
+            >
+              {sec.title}
+            </h2>
+            {renderCustomSectionLines(sec.content, sec.items, {
+              isOnePage,
+              primaryColor: '#1c1917',
+              textColor: '#292524',
+              metaColor: '#78716c',
+            })}
+          </section>
+        ))}
+
       {/* Technical Methodologies & Scholarly Tools */}
       {skills && skills.length > 0 && (
         <section
@@ -373,13 +408,14 @@ export const AcademicCvTemplate: React.FC<{ resume: ResumeBuilderData }> = ({ re
         </section>
       )}
 
-      {/* Custom Academic Sections (e.g. Publications, Conferences) */}
-      {customSections &&
-        customSections.map((sec, i) => (
+      {/* Other Custom Sections (Awards, Volunteering, Leadership, etc.) */}
+      {otherCustomSections &&
+        otherCustomSections.length > 0 &&
+        otherCustomSections.map((sec, i) => (
           <section
-            key={i}
+            key={`other-custom-${i}`}
             className="resume-section"
-            style={{ marginBottom: isOnePage ? '10px' : '15px' }}
+            style={{ marginBottom: isOnePage ? '8px' : '12px' }}
           >
             <h2
               className="resume-section-heading"
@@ -395,34 +431,12 @@ export const AcademicCvTemplate: React.FC<{ resume: ResumeBuilderData }> = ({ re
             >
               {sec.title}
             </h2>
-            {sec.content && (
-              <p
-                style={{
-                  whiteSpace: 'pre-line',
-                  fontSize: isOnePage ? '9pt' : '10pt',
-                  margin: 0,
-                  textAlign: 'justify',
-                }}
-              >
-                {sec.content}
-              </p>
-            )}
-            {sec.items && (
-              <ul
-                style={{
-                  paddingLeft: '22px',
-                  marginTop: '3px',
-                  marginBottom: 0,
-                  fontSize: isOnePage ? '9pt' : '9.5pt',
-                }}
-              >
-                {sec.items.map((it, idx) => (
-                  <li key={idx} style={{ marginBottom: isOnePage ? '2px' : '3px' }}>
-                    {it}
-                  </li>
-                ))}
-              </ul>
-            )}
+            {renderCustomSectionLines(sec.content, sec.items, {
+              isOnePage,
+              primaryColor: '#1c1917',
+              textColor: '#292524',
+              metaColor: '#78716c',
+            })}
           </section>
         ))}
     </div>

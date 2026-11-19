@@ -434,7 +434,33 @@ function condenseBulletText(text, maxBullets = 2) {
     return bullets.join("\n");
 }
 
-function ruleBasedOnePageOptimization({ summary = "", experience = [], projects = [] }) {
+function condenseCustomSectionContent(content, maxBullets = 2) {
+    if (!content || typeof content !== "string") return "";
+    const lines = content.split("\n").map((l) => l.trim()).filter(Boolean);
+    const out = [];
+    let bulletCount = 0;
+
+    for (const line of lines) {
+        // Headers and metadata lines are preserved intact
+        if (line.includes("|") || /^(?:[-*•]\s*)?(?:technologies|tech|proposed stack|stack|tools|event|role):/i.test(line)) {
+            out.push(line);
+            bulletCount = 0; // Reset for new entry
+        } else {
+            // Description bullet lines are capped
+            if (bulletCount < maxBullets) {
+                let clean = line.replace(/^[•\-\*]\s*/, "");
+                if (clean.length > 140) {
+                    clean = clean.substring(0, 137).trim() + "...";
+                }
+                out.push(`• ${clean}`);
+                bulletCount++;
+            }
+        }
+    }
+    return out.join("\n");
+}
+
+function ruleBasedOnePageOptimization({ summary = "", experience = [], projects = [], customSections = [] }) {
     let condensedSummary = summary;
     if (summary && summary.length > 220) {
         const sentences = summary.match(/[^.!?]+[.!?]+/g);
@@ -459,17 +485,24 @@ function ruleBasedOnePageOptimization({ summary = "", experience = [], projects 
         link: p.link || "",
     }));
 
+    const condensedCustom = (customSections || []).map((sec) => ({
+        title: sec.title || "",
+        content: condenseCustomSectionContent(sec.content, 2),
+        items: Array.isArray(sec.items) ? sec.items.map((it) => condenseBulletText(it, 2)) : [],
+    }));
+
     return {
         summary: condensedSummary,
         experience: condensedExp,
         projects: condensedProj,
+        customSections: condensedCustom,
         isFallback: true,
     };
 }
 
-async function optimizeResumeForOnePage({ summary = "", experience = [], projects = [], skills = [], targetRole = "" }) {
+async function optimizeResumeForOnePage({ summary = "", experience = [], projects = [], customSections = [], skills = [], targetRole = "" }) {
     if (!process.env.GEMINI_API_KEY) {
-        return ruleBasedOnePageOptimization({ summary, experience, projects });
+        return ruleBasedOnePageOptimization({ summary, experience, projects, customSections });
     }
 
     try {
@@ -490,10 +523,14 @@ ${JSON.stringify(experience, null, 2)}
 CURRENT PROJECTS:
 ${JSON.stringify(projects, null, 2)}
 
+CURRENT CUSTOM SECTIONS (e.g. HACKATHONS):
+${JSON.stringify(customSections, null, 2)}
+
 STRICT RULES:
 1. SUMMARY: Condense into exactly 2 punchy, high-impact sentences highlighting the strongest competencies.
 2. EXPERIENCE: Keep all existing entries. For each entry, produce 2 concise bullet points starting with "• ". Eliminate wordiness while keeping technical metrics and action verbs.
 3. PROJECTS: Keep all existing entries. For each project, produce 1 or 2 concise bullet points starting with "• ".
+4. CUSTOM SECTIONS: Keep all existing entries. Condense description bullets to 1-2 concise points per entry starting with "• ".
 
 Return strictly valid JSON:
 {
@@ -513,6 +550,12 @@ Return strictly valid JSON:
       "description": "• Bullet 1",
       "link": "..."
     }
+  ],
+  "customSections": [
+    {
+      "title": "...",
+      "content": "..."
+    }
   ]
 }
 `;
@@ -528,11 +571,12 @@ Return strictly valid JSON:
             summary: parsed.summary,
             experience: Array.isArray(parsed.experience) ? parsed.experience : experience,
             projects: Array.isArray(parsed.projects) ? parsed.projects : projects,
+            customSections: Array.isArray(parsed.customSections) && parsed.customSections.length > 0 ? parsed.customSections : customSections,
             isFallback: false,
         };
     } catch (err) {
         console.warn("[One-Page AI] Failed to condense with Gemini, applying rule-based optimizer:", err.message);
-        return ruleBasedOnePageOptimization({ summary, experience, projects });
+        return ruleBasedOnePageOptimization({ summary, experience, projects, customSections });
     }
 }
 

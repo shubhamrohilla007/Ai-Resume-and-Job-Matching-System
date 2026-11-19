@@ -1,9 +1,12 @@
 import React from 'react';
 import { ResumeBuilderData } from '../../types';
+import { splitCustomSections, renderCustomSectionLines } from './templateUtils';
 
 export const BusinessProfessionalTemplate: React.FC<{ resume: ResumeBuilderData }> = ({ resume }) => {
   const { personal, summary, education, skills, experience, projects, certifications, customSections } = resume;
   const isOnePage = resume.pageMode === 'one-page';
+
+  const { projectLike: projectLikeSections, others: otherCustomSections } = splitCustomSections(customSections);
 
   return (
     <div
@@ -319,6 +322,38 @@ export const BusinessProfessionalTemplate: React.FC<{ resume: ResumeBuilderData 
         </section>
       )}
 
+            {/* Project-like Custom Sections (Hackathons, Competitions, Projects) */}
+      {projectLikeSections &&
+        projectLikeSections.length > 0 &&
+        projectLikeSections.map((sec, i) => (
+          <section
+            key={`proj-custom-${i}`}
+            className="resume-section"
+            style={{ marginBottom: isOnePage ? '8px' : '12px' }}
+          >
+            <h2
+              className="resume-section-heading"
+              style={{
+                fontSize: isOnePage ? '9.5pt' : '10.5pt',
+                fontWeight: '700',
+                color: '#0f766e',
+                textTransform: 'uppercase',
+                borderBottom: '1px solid #cbd5e1',
+                paddingBottom: '3px',
+                marginBottom: isOnePage ? '4px' : '6px',
+              }}
+            >
+              {sec.title}
+            </h2>
+            {renderCustomSectionLines(sec.content, sec.items, {
+              isOnePage,
+              primaryColor: '#0f766e',
+              textColor: '#1e293b',
+              metaColor: '#475569',
+            })}
+          </section>
+        ))}
+
       {/* Education & Executive Credentials */}
       <div
         style={{
@@ -388,11 +423,12 @@ export const BusinessProfessionalTemplate: React.FC<{ resume: ResumeBuilderData 
         )}
       </div>
 
-      {/* Custom Sections */}
-      {customSections &&
-        customSections.map((sec, i) => (
+      {/* Other Custom Sections (Awards, Volunteering, Leadership, etc.) */}
+      {otherCustomSections &&
+        otherCustomSections.length > 0 &&
+        otherCustomSections.map((sec, i) => (
           <section
-            key={i}
+            key={`other-custom-${i}`}
             className="resume-section"
             style={{ marginBottom: isOnePage ? '8px' : '12px' }}
           >
@@ -410,18 +446,12 @@ export const BusinessProfessionalTemplate: React.FC<{ resume: ResumeBuilderData 
             >
               {sec.title}
             </h2>
-            {sec.content && (
-              <p
-                style={{
-                  fontSize: isOnePage ? '8.5pt' : '9pt',
-                  color: '#334155',
-                  margin: 0,
-                  whiteSpace: 'pre-line',
-                }}
-              >
-                {sec.content}
-              </p>
-            )}
+            {renderCustomSectionLines(sec.content, sec.items, {
+              isOnePage,
+              primaryColor: '#0f766e',
+              textColor: '#1e293b',
+              metaColor: '#475569',
+            })}
           </section>
         ))}
     </div>

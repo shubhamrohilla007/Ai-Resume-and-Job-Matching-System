@@ -502,3 +502,113 @@ describe('Acceptance Criteria 9: Skills Input Tokenization & Deduplication Logic
     ]);
   });
 });
+
+describe('Acceptance Criteria 10: Multi-Profession Resume Section Preservation & Isolation', () => {
+  const { ruleBasedStructuredExtract } = require('../services/parser/resumeStructuredExtractor');
+
+  test('ruleBasedStructuredExtract isolates HACKATHONS into customSections and keeps PROJECTS strictly isolated', () => {
+    const resumeText = `
+SHUBHAM
+Bahadurgarh, Haryana | +91 7056223854 | rohillashubham123@gmail.com
+GitHub: github.com/shubhamrohilla007
+
+PROFESSIONAL SUMMARY
+Full Stack Web Developer and MCA (AI & ML) student with hands-on experience building web applications using React.js, Node.js, Express.js, MongoDB.
+
+TECHNICAL SKILLS
+Languages: JavaScript, Java, Python
+Frontend: React.js, Next.js, HTML, CSS
+Backend: Node.js, Express.js, MongoDB
+
+PROJECTS
+AI-Powered Resume & Job Matching System | Full-Stack AI Project
+Technologies: React.js, Node.js, Express.js, MongoDB, Passport.js, Gemini API, Cloudinary
+• Built a full-stack recruitment platform for resume management and ATS analysis.
+• Integrated the Gemini API for ATS scoring and skill extraction.
+
+Wanderlust - Travel Listing Web Application | Live: wanderlust-ay1q.onrender.com
+Technologies: Node.js, Express.js, MongoDB, EJS, Bootstrap, JavaScript, Render
+• Built and deployed a full-stack Airbnb-inspired travel listing app using Node.js and Express.js.
+• Implemented CRUD operations, user authentication, and reviews.
+
+HACKATHONS
+TrustBridge - Scam-Free Job & Internship Platform | Hackathon, IIIT Delhi | Team of 5
+Technologies: Next.js, React.js, Node.js, Express.js, MongoDB, Gemini API
+• Built a platform where every job listing goes through an AI audit before students can see it.
+• Implemented a 0-100 trust score engine.
+
+SkillSync - Smart India Hackathon 2026 | Team Aasync Avenger | PS ID: SIH26134
+• Selected at college-level internal round. Designed an AI platform that extracts skills.
+
+EDUCATION
+Master of Computer Applications (AI & ML), SGT University | CGPA: 9.14/10 | 2027
+Bachelor of Computer Applications, Baba Mastnath University | 69.96% | 2024
+
+CERTIFICATIONS
+Full Stack Web Development - Apna College
+Web Development Basics - IBM SkillsBuild
+`;
+
+    const extracted = ruleBasedStructuredExtract(resumeText, null, "Shubham_Resume.pdf");
+
+    // 1. Projects must ONLY contain the 2 genuine projects, NOT Hackathons
+    assert.equal(extracted.projects.length, 2, "Projects must contain exactly 2 projects");
+    assert.equal(extracted.projects[0].name.includes("AI-Powered Resume"), true);
+    assert.equal(extracted.projects[1].name.includes("Wanderlust"), true);
+    assert.equal(extracted.projects.some(p => p.name.includes("TrustBridge")), false, "TrustBridge must NOT be in projects");
+
+    // 2. Custom sections must contain HACKATHONS
+    const hackathonSection = extracted.customSections.find(s => s.title.toUpperCase().includes("HACKATHON"));
+    assert.ok(hackathonSection, "HACKATHONS customSection must be created");
+    assert.equal(hackathonSection.content.includes("TrustBridge"), true, "TrustBridge must be in HACKATHONS customSection");
+    assert.equal(hackathonSection.content.includes("SkillSync"), true, "SkillSync must be in HACKATHONS customSection");
+
+    // 3. Education & Personal info must remain intact
+    assert.equal(extracted.education.length, 2, "Education must have 2 entries");
+    assert.equal(extracted.personal.fullName, "Shubham");
+    assert.equal(extracted.personal.email, "rohillashubham123@gmail.com");
+  });
+
+  test('ruleBasedStructuredExtract isolates Academic Publications and Medical Clinical Rotations', () => {
+    const academicResume = `
+DR. ARVIND SHARMA
+New Delhi | arvind@example.com
+
+EDUCATION
+Ph.D. in Computer Science, IIT Delhi | 2022
+
+PUBLICATIONS
+Deep Learning for Medical Imaging | IEEE Transactions 2023
+• Proposed convolutional neural network architecture for MRI anomaly detection.
+
+CONFERENCES
+International AI Summit 2024 | Speaker
+• Keynote on Generative AI in Healthcare.
+`;
+
+    const academicExtracted = ruleBasedStructuredExtract(academicResume, null, "CV.pdf");
+    const pubSection = academicExtracted.customSections.find(s => s.title.includes("PUBLICATIONS"));
+    assert.ok(pubSection, "PUBLICATIONS section must be extracted as a custom section");
+    assert.equal(pubSection.content.includes("Deep Learning for Medical Imaging"), true);
+
+    const confSection = academicExtracted.customSections.find(s => s.title.includes("CONFERENCES"));
+    assert.ok(confSection, "CONFERENCES section must be extracted as a custom section");
+  });
+});
+
+describe('Acceptance Criteria 11: Cloud Storage Optimization & Safe Asset Purge', () => {
+  const { purgeObsoleteUserResumes, cleanupExpiredOrphanedResumes } = require('../services/storageCleanupService');
+
+  test('purgeObsoleteUserResumes function signature and safety guards execute without throwing', async () => {
+    // Calling with null or empty userId should safely return without crashing
+    const result = await purgeObsoleteUserResumes(null);
+    assert.deepEqual(result, { purgedCount: 0, bytesFreed: 0, preservedCount: 0 });
+  });
+
+  test('cleanupExpiredOrphanedResumes function signature and default retention execute safely', async () => {
+    const result = await cleanupExpiredOrphanedResumes({ retentionDays: 9999 });
+    assert.ok(typeof result.purgedCount === 'number');
+    assert.ok(typeof result.bytesFreed === 'number');
+    assert.ok(typeof result.preservedCount === 'number');
+  });
+});

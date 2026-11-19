@@ -1,9 +1,12 @@
 import React from 'react';
 import { ResumeBuilderData } from '../../types';
+import { splitCustomSections, renderCustomSectionLines } from './templateUtils';
 
 export const FresherMinimalTemplate: React.FC<{ resume: ResumeBuilderData }> = ({ resume }) => {
   const { personal, summary, education, skills, experience, projects, certifications, customSections } = resume;
   const isOnePage = resume.pageMode === 'one-page';
+
+  const { projectLike: projectLikeSections, others: otherCustomSections } = splitCustomSections(customSections);
 
   return (
     <div
@@ -356,6 +359,39 @@ export const FresherMinimalTemplate: React.FC<{ resume: ResumeBuilderData }> = (
         </section>
       )}
 
+            {/* Project-like Custom Sections (Hackathons, Competitions, Portfolio) */}
+      {projectLikeSections &&
+        projectLikeSections.length > 0 &&
+        projectLikeSections.map((sec, i) => (
+          <section
+            key={`proj-custom-${i}`}
+            className="resume-section"
+            style={{ marginBottom: isOnePage ? '8px' : '12px' }}
+          >
+            <h2
+              className="resume-section-heading"
+              style={{
+                fontSize: isOnePage ? '9.5pt' : '10pt',
+                fontWeight: '700',
+                color: '#0891b2',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                borderBottom: '1.5px solid #0891b2',
+                paddingBottom: '2px',
+                marginBottom: isOnePage ? '4px' : '6px',
+              }}
+            >
+              {sec.title}
+            </h2>
+            {renderCustomSectionLines(sec.content, sec.items, {
+              isOnePage,
+              primaryColor: '#0f172a',
+              textColor: '#334155',
+              metaColor: '#0891b2',
+            })}
+          </section>
+        ))}
+
       {/* Certifications & Training */}
       {certifications && certifications.length > 0 && (
         <section
@@ -398,11 +434,12 @@ export const FresherMinimalTemplate: React.FC<{ resume: ResumeBuilderData }> = (
         </section>
       )}
 
-      {/* Custom Sections (Co-curricular, Volunteering, Hackathons) */}
-      {customSections &&
-        customSections.map((sec, i) => (
+      {/* Other Custom Sections (Awards, Volunteering, Leadership, etc.) */}
+      {otherCustomSections &&
+        otherCustomSections.length > 0 &&
+        otherCustomSections.map((sec, i) => (
           <section
-            key={i}
+            key={`other-custom-${i}`}
             className="resume-section"
             style={{ marginBottom: isOnePage ? '8px' : '12px' }}
           >
@@ -421,33 +458,12 @@ export const FresherMinimalTemplate: React.FC<{ resume: ResumeBuilderData }> = (
             >
               {sec.title}
             </h2>
-            {sec.content && (
-              <p
-                style={{
-                  fontSize: isOnePage ? '8.5pt' : '9pt',
-                  color: '#475569',
-                  margin: 0,
-                  whiteSpace: 'pre-line',
-                }}
-              >
-                {sec.content}
-              </p>
-            )}
-            {sec.items && (
-              <ul
-                style={{
-                  paddingLeft: '18px',
-                  marginTop: '3px',
-                  marginBottom: 0,
-                  fontSize: isOnePage ? '8.5pt' : '9pt',
-                  color: '#475569',
-                }}
-              >
-                {sec.items.map((it, idx) => (
-                  <li key={idx}>{it}</li>
-                ))}
-              </ul>
-            )}
+            {renderCustomSectionLines(sec.content, sec.items, {
+              isOnePage,
+              primaryColor: '#0f172a',
+              textColor: '#334155',
+              metaColor: '#0891b2',
+            })}
           </section>
         ))}
     </div>

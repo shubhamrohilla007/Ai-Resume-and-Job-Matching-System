@@ -13,6 +13,7 @@ import {
   ArrowRight,
   TrendingUp,
   AlertCircle,
+  Trash2,
 } from 'lucide-react';
 
 export const AtsAnalysisPage: React.FC = () => {
@@ -89,6 +90,34 @@ export const AtsAnalysisPage: React.FC = () => {
     }
   };
 
+  const handleDeleteResume = async (id: string) => {
+    if (!window.confirm('Delete this resume version from storage?')) return;
+    try {
+      const res = await resumeApi.deleteResume(id);
+      if (res.success) {
+        setSuccessMsg('Resume deleted successfully.');
+        await fetchResumesList();
+        await fetchAnalysis();
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Failed to delete resume.');
+    }
+  };
+
+  const handleCleanOldResumes = async () => {
+    if (!window.confirm('Clean up older unlinked versions and keep only the latest active resume?')) return;
+    try {
+      const res = await resumeApi.cleanOldResumes();
+      if (res.success) {
+        setSuccessMsg(res.message || 'Older versions purged successfully!');
+        await fetchResumesList();
+        await fetchAnalysis();
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Failed to purge older resumes.');
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', minHeight: '50vh', alignItems: 'center' }}>
@@ -151,6 +180,7 @@ export const AtsAnalysisPage: React.FC = () => {
         <div style={{
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           gap: '0.75rem',
           marginBottom: '1.5rem',
           background: '#fff',
@@ -159,27 +189,51 @@ export const AtsAnalysisPage: React.FC = () => {
           border: '1px solid var(--slate-200)',
           flexWrap: 'wrap',
         }}>
-          <FileText size={18} color="var(--primary)" />
-          <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--slate-800)' }}>
-            Select Uploaded Resume ({resumesList.length}):
-          </span>
-          <select
-            className="form-select"
-            style={{ width: 'auto', minWidth: '240px', padding: '0.35rem 0.65rem', fontSize: '0.85rem' }}
-            value={analysis?.id || ''}
-            onChange={(e) => {
-              const targetId = e.target.value;
-              if (targetId) {
-                fetchAnalysis(targetId);
-              }
-            }}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+            <FileText size={18} color="var(--primary)" />
+            <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--slate-800)' }}>
+              Select Uploaded Resume ({resumesList.length}):
+            </span>
+            <select
+              className="form-select"
+              style={{ width: 'auto', minWidth: '240px', padding: '0.35rem 0.65rem', fontSize: '0.85rem' }}
+              value={analysis?.id || ''}
+              onChange={(e) => {
+                const targetId = e.target.value;
+                if (targetId) {
+                  fetchAnalysis(targetId);
+                }
+              }}
+            >
+              {resumesList.map((r: any) => (
+                <option key={r.id} value={r.id}>
+                  {r.originalName} ({r.atsScore}% ATS • {new Date(r.createdAt).toLocaleDateString()})
+                </option>
+              ))}
+            </select>
+
+            {analysis?.id && (
+              <button
+                type="button"
+                onClick={() => handleDeleteResume(analysis.id)}
+                className="btn btn-secondary btn-sm"
+                title="Delete this selected resume"
+                style={{ color: '#dc2626', borderColor: '#fca5a5' }}
+              >
+                <Trash2 size={14} /> Delete
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCleanOldResumes}
+            className="btn btn-secondary btn-sm"
+            style={{ fontSize: '0.8rem', background: '#fef2f2', color: '#b91c1c', borderColor: '#fecaca' }}
+            title="Purge all older unlinked versions from Cloudinary and keep only the latest active resume"
           >
-            {resumesList.map((r: any) => (
-              <option key={r.id} value={r.id}>
-                {r.originalName} ({r.atsScore}% ATS • {new Date(r.createdAt).toLocaleDateString()})
-              </option>
-            ))}
-          </select>
+            <Trash2 size={14} /> Purge {resumesList.length - 1} Older Version{resumesList.length - 1 > 1 ? 's' : ''} (Keep Latest)
+          </button>
         </div>
       )}
 

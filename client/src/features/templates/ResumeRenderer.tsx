@@ -32,7 +32,7 @@ export const ResumeRenderer: React.FC<ResumeRendererProps> = ({ resume, template
         width: '100%',
         maxWidth: '850px',
         margin: '0 auto',
-        padding: isOnePage ? '26px 36px' : '36px 44px',
+        padding: isOnePage ? '20px 28px' : '36px 44px',
         boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.08)',
         border: '1px solid #e2e8f0',
         borderRadius: '8px',
