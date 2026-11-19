@@ -13,14 +13,14 @@ const emailService = require("../../services/emailService");
 function parseSkills(value) {
     let rawList = [];
     if (Array.isArray(value)) {
-        rawList = value.flatMap((item) => String(item).split(/[,;\n]/));
+        rawList = value.flatMap((item) => String(item).split(/[,;\n]|\.\s+/));
     } else {
-        rawList = String(value || "").split(/[,;\n]/);
+        rawList = String(value || "").split(/[,;\n]|\.\s+/);
     }
     return rawList
         .map((skill) => skill.trim())
         .filter(Boolean)
-        .map((skill) => (skill.length > 50 ? skill.slice(0, 45) + "..." : skill));
+        .map((skill) => (skill.length > 45 ? skill.slice(0, 42) + "..." : skill));
 }
 
 function validateJobData(data) {

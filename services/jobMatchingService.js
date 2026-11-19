@@ -55,13 +55,15 @@ function uniqueSkills(skills = []) {
             original = original.substring(colonIdx + 1).trim();
         }
 
-        // Support comma-separated skills in a single array item.
-        for (const part of original.split(",")) {
+        // Support comma, semicolon, newline, or sentence period-separated skills
+        for (const part of original.split(/[,;\n]|\.\s+/)) {
             const label = part.trim();
-            const normalized = canonicalSkill(label);
+            if (!label) continue;
+            const cleanLabel = label.length > 45 ? label.slice(0, 42) + "..." : label;
+            const normalized = canonicalSkill(cleanLabel);
 
             if (normalized && !result.has(normalized)) {
-                result.set(normalized, label);
+                result.set(normalized, cleanLabel);
             }
         }
     }

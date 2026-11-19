@@ -290,14 +290,18 @@ export const RecommendedJobsPage: React.FC = () => {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                     {job.matchedRequired && job.matchedRequired.map((s, i) => (
                       <span key={i} className="badge badge-success">
-                        <CheckCircle2 size={13} /> {s}
+                        <CheckCircle2 size={13} style={{ flexShrink: 0 }} /> {s}
                       </span>
                     ))}
-                    {job.missingRequired && job.missingRequired.map((s, i) => (
-                      <span key={i} className="badge badge-danger">
-                        <XCircle size={13} /> Missing: {s}
-                      </span>
-                    ))}
+                    {job.missingRequired && job.missingRequired.map((s, i) => {
+                      const isLong = s.length > 40;
+                      const displaySkill = isLong ? s.slice(0, 40) + '...' : s;
+                      return (
+                        <span key={i} className="badge badge-danger" title={s}>
+                          <XCircle size={13} style={{ flexShrink: 0 }} /> Missing: {displaySkill}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -325,18 +329,23 @@ export const RecommendedJobsPage: React.FC = () => {
               {/* Trust Signals Footer */}
               {job.trustSignals && job.trustSignals.length > 0 && (
                 <div style={{
-                  fontSize: '0.8rem',
-                  color: 'var(--slate-600)',
+                  fontSize: '0.825rem',
+                  color: 'var(--slate-700)',
                   background: '#f0fdf4',
-                  padding: '0.5rem 0.85rem',
+                  border: '1px solid #bbf7d0',
+                  padding: '0.65rem 0.95rem',
                   borderRadius: 'var(--radius-sm)',
                   marginBottom: '1rem',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
+                  alignItems: 'flex-start',
+                  gap: '0.6rem',
+                  lineHeight: '1.45',
                 }}>
-                  <ShieldCheck size={15} color="#16a34a" />
-                  <strong>TrustBridge Audit Signals:</strong> {job.trustSignals.join(' • ')}
+                  <ShieldCheck size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <strong style={{ color: '#15803d' }}>TrustBridge Audit Signals:</strong>{' '}
+                    <span>{job.trustSignals.join(' • ')}</span>
+                  </div>
                 </div>
               )}
 

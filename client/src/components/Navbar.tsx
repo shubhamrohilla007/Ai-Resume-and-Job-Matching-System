@@ -18,6 +18,8 @@ import {
   Search,
   ShieldCheck,
   MessageSquare,
+  Users,
+  Activity,
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { FeedbackModal } from './FeedbackModal';
@@ -75,7 +77,7 @@ export const Navbar: React.FC = () => {
     }
     setResumeDropdownOpen(false);
     setMobileMenuOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   // Close dropdown on outside click or Escape key
   useEffect(() => {
@@ -116,146 +118,209 @@ export const Navbar: React.FC = () => {
     <nav className="navbar no-print">
       <div className="navbar-inner">
         {/* Brand */}
-        <Link to="/" className="nav-brand" title="AI Resume & Careers Platform">
+        <Link
+          to={user?.role === 'admin' ? '/admin' : '/'}
+          className="nav-brand"
+          title={user?.role === 'admin' ? 'AI Resume Admin Console' : 'AI Resume & Careers Platform'}
+        >
           <div className="nav-brand-logo">
-            <FileText size={18} />
+            {user?.role === 'admin' ? <ShieldCheck size={18} /> : <FileText size={18} />}
           </div>
           <span className="nav-brand-text">
             <span className="nav-brand-main">AI Resume</span>
-            <span className="nav-brand-sub"> & Careers</span>
+            <span className="nav-brand-sub">{user?.role === 'admin' ? ' Admin' : ' & Careers'}</span>
           </span>
         </Link>
 
         {/* Center Navigation Links (Desktop: >= 992px) */}
         <div className="nav-center">
           {isAuthenticated ? (
-            <>
-              <Link to="/dashboard" className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`}>
-                <LayoutDashboard size={15} />
-                <span>Dashboard</span>
-              </Link>
-
-              {user?.role === 'job_seeker' && (
-                <>
-                  {/* Resume Dropdown */}
-                  <div
-                    className="nav-dropdown-container"
-                    ref={dropdownRef}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                  >
-                    <button
-                      type="button"
-                      className={`nav-dropdown-trigger ${isResumeActive() ? 'active' : ''}`}
-                      onClick={handleTriggerClick}
-                      aria-expanded={resumeDropdownOpen}
-                      aria-haspopup="true"
-                    >
-                      <FileText size={15} />
-                      <span>Resume</span>
-                      <ChevronDown
-                        size={13}
-                        style={{
-                          transform: resumeDropdownOpen ? 'rotate(180deg)' : 'none',
-                          transition: 'transform 0.2s ease',
-                        }}
-                      />
-                    </button>
-
-                    {resumeDropdownOpen && (
-                      <div
-                        className="nav-dropdown-menu"
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
-                      >
-                        <Link
-                          to="/resume/builder"
-                          className={`nav-dropdown-item ${isActive('/resume/builder') ? 'active' : ''}`}
-                          onClick={() => setResumeDropdownOpen(false)}
-                        >
-                          <FileText size={16} className="nav-dropdown-item-icon" />
-                          <div>
-                            <div className="nav-dropdown-item-title">Resume Builder</div>
-                            <div className="nav-dropdown-item-desc">
-                              Multi-profession builder with live preview
-                            </div>
-                          </div>
-                        </Link>
-
-                        <Link
-                          to="/resume/templates"
-                          className={`nav-dropdown-item ${isActive('/resume/templates') ? 'active' : ''}`}
-                          onClick={() => setResumeDropdownOpen(false)}
-                        >
-                          <Sparkles size={16} className="nav-dropdown-item-icon" />
-                          <div>
-                            <div className="nav-dropdown-item-title">Templates Gallery</div>
-                            <div className="nav-dropdown-item-desc">
-                              Browse 6 profession-tailored formats
-                            </div>
-                          </div>
-                        </Link>
-
-                        <Link
-                          to="/resume/analysis"
-                          className={`nav-dropdown-item ${isActive('/resume/analysis') ? 'active' : ''}`}
-                          onClick={() => setResumeDropdownOpen(false)}
-                        >
-                          <Upload size={16} className="nav-dropdown-item-icon" />
-                          <div>
-                            <div className="nav-dropdown-item-title">ATS Analysis</div>
-                            <div className="nav-dropdown-item-desc">
-                              Score existing PDF/DOCX and check keywords
-                            </div>
-                          </div>
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-
-                  <Link to="/jobs/recommended" className={`nav-link ${isActive('/jobs/recommended') ? 'active' : ''}`}>
-                    <Briefcase size={15} />
-                    <span>Match Jobs</span>
-                  </Link>
-
-                  <Link to="/applications" className={`nav-link ${isActive('/applications') ? 'active' : ''}`}>
-                    <ClipboardList size={15} />
-                    <span>My Applications</span>
-                  </Link>
-                </>
-              )}
-
-              {user?.role === 'recruiter' && (
-                <>
-                  <Link to="/recruiter/jobs" className={`nav-link ${isActive('/recruiter/jobs') ? 'active' : ''}`}>
-                    <Briefcase size={15} />
-                    <span>Manage Jobs</span>
-                  </Link>
-
-                  <Link to="/recruiter/jobs/new" className={`nav-link ${isActive('/recruiter/jobs/new') ? 'active' : ''}`}>
-                    <PlusCircle size={15} />
-                    <span>Post Job</span>
-                  </Link>
-                </>
-              )}
-
-              {user?.role === 'admin' && (
-                <Link to="/admin" className={`nav-link ${isActive('/admin') ? 'active' : ''}`} style={{ color: 'var(--primary-600)', fontWeight: 600 }}>
+            user?.role === 'admin' ? (
+              /* ==========================================
+                 Admin Center Navigation (Dedicated & Focused)
+                 ========================================== */
+              <>
+                <Link
+                  to="/admin"
+                  className={`nav-link ${location.pathname === '/admin' && (!location.search || location.search === '?tab=overview') ? 'active' : ''}`}
+                >
                   <ShieldCheck size={15} />
-                  <span>Admin Panel</span>
+                  <span>Overview</span>
                 </Link>
-              )}
 
-              <Link to="/courses" className={`nav-link ${isActive('/courses') ? 'active' : ''}`}>
-                <GraduationCap size={15} />
-                <span>Free Courses</span>
-              </Link>
+                <Link
+                  to="/admin?tab=users"
+                  className={`nav-link ${location.search.includes('tab=users') ? 'active' : ''}`}
+                >
+                  <Users size={15} />
+                  <span>Users</span>
+                </Link>
 
-              <Link to="/jobs" className={`nav-link ${isActive('/jobs') ? 'active' : ''}`}>
-                <Search size={15} />
-                <span>Browse Jobs</span>
-              </Link>
-            </>
+                <Link
+                  to="/admin?tab=jobs"
+                  className={`nav-link ${location.search.includes('tab=jobs') ? 'active' : ''}`}
+                >
+                  <Briefcase size={15} />
+                  <span>Job Moderation</span>
+                </Link>
+
+                <Link
+                  to="/admin?tab=resumes"
+                  className={`nav-link ${location.search.includes('tab=resumes') ? 'active' : ''}`}
+                >
+                  <FileText size={15} />
+                  <span>Resumes</span>
+                </Link>
+
+                <Link
+                  to="/admin?tab=applications"
+                  className={`nav-link ${location.search.includes('tab=applications') ? 'active' : ''}`}
+                >
+                  <ClipboardList size={15} />
+                  <span>Applications</span>
+                </Link>
+
+                <Link
+                  to="/admin?tab=feedback"
+                  className={`nav-link ${location.search.includes('tab=feedback') ? 'active' : ''}`}
+                >
+                  <MessageSquare size={15} />
+                  <span>Feedback Inbox</span>
+                </Link>
+
+                <Link
+                  to="/admin?tab=settings"
+                  className={`nav-link ${location.search.includes('tab=settings') ? 'active' : ''}`}
+                >
+                  <Activity size={15} />
+                  <span>System Health</span>
+                </Link>
+              </>
+            ) : (
+              /* ==========================================
+                 Candidate & Recruiter Navigation
+                 ========================================== */
+              <>
+                <Link to="/dashboard" className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`}>
+                  <LayoutDashboard size={15} />
+                  <span>Dashboard</span>
+                </Link>
+
+                {user?.role === 'job_seeker' && (
+                  <>
+                    {/* Resume Dropdown */}
+                    <div
+                      className="nav-dropdown-container"
+                      ref={dropdownRef}
+                      onMouseEnter={handleMouseEnter}
+                      onMouseLeave={handleMouseLeave}
+                    >
+                      <button
+                        type="button"
+                        className={`nav-dropdown-trigger ${isResumeActive() ? 'active' : ''}`}
+                        onClick={handleTriggerClick}
+                        aria-expanded={resumeDropdownOpen}
+                        aria-haspopup="true"
+                      >
+                        <FileText size={15} />
+                        <span>Resume</span>
+                        <ChevronDown
+                          size={13}
+                          style={{
+                            transform: resumeDropdownOpen ? 'rotate(180deg)' : 'none',
+                            transition: 'transform 0.2s ease',
+                          }}
+                        />
+                      </button>
+
+                      {resumeDropdownOpen && (
+                        <div
+                          className="nav-dropdown-menu"
+                          onMouseEnter={handleMouseEnter}
+                          onMouseLeave={handleMouseLeave}
+                        >
+                          <Link
+                            to="/resume/builder"
+                            className={`nav-dropdown-item ${isActive('/resume/builder') ? 'active' : ''}`}
+                            onClick={() => setResumeDropdownOpen(false)}
+                          >
+                            <FileText size={16} className="nav-dropdown-item-icon" />
+                            <div>
+                              <div className="nav-dropdown-item-title">Resume Builder</div>
+                              <div className="nav-dropdown-item-desc">
+                                Multi-profession builder with live preview
+                              </div>
+                            </div>
+                          </Link>
+
+                          <Link
+                            to="/resume/templates"
+                            className={`nav-dropdown-item ${isActive('/resume/templates') ? 'active' : ''}`}
+                            onClick={() => setResumeDropdownOpen(false)}
+                          >
+                            <Sparkles size={16} className="nav-dropdown-item-icon" />
+                            <div>
+                              <div className="nav-dropdown-item-title">Templates Gallery</div>
+                              <div className="nav-dropdown-item-desc">
+                                Browse 6 profession-tailored formats
+                              </div>
+                            </div>
+                          </Link>
+
+                          <Link
+                            to="/resume/analysis"
+                            className={`nav-dropdown-item ${isActive('/resume/analysis') ? 'active' : ''}`}
+                            onClick={() => setResumeDropdownOpen(false)}
+                          >
+                            <Upload size={16} className="nav-dropdown-item-icon" />
+                            <div>
+                              <div className="nav-dropdown-item-title">ATS Analysis</div>
+                              <div className="nav-dropdown-item-desc">
+                                Score existing PDF/DOCX and check keywords
+                              </div>
+                            </div>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+
+                    <Link to="/jobs/recommended" className={`nav-link ${isActive('/jobs/recommended') ? 'active' : ''}`}>
+                      <Briefcase size={15} />
+                      <span>Match Jobs</span>
+                    </Link>
+
+                    <Link to="/applications" className={`nav-link ${isActive('/applications') ? 'active' : ''}`}>
+                      <ClipboardList size={15} />
+                      <span>My Applications</span>
+                    </Link>
+                  </>
+                )}
+
+                {user?.role === 'recruiter' && (
+                  <>
+                    <Link to="/recruiter/jobs" className={`nav-link ${isActive('/recruiter/jobs') ? 'active' : ''}`}>
+                      <Briefcase size={15} />
+                      <span>Manage Jobs</span>
+                    </Link>
+
+                    <Link to="/recruiter/jobs/new" className={`nav-link ${isActive('/recruiter/jobs/new') ? 'active' : ''}`}>
+                      <PlusCircle size={15} />
+                      <span>Post Job</span>
+                    </Link>
+                  </>
+                )}
+
+                <Link to="/courses" className={`nav-link ${isActive('/courses') ? 'active' : ''}`}>
+                  <GraduationCap size={15} />
+                  <span>Free Courses</span>
+                </Link>
+
+                <Link to="/jobs" className={`nav-link ${isActive('/jobs') ? 'active' : ''}`}>
+                  <Search size={15} />
+                  <span>Browse Jobs</span>
+                </Link>
+              </>
+            )
           ) : (
             <>
               <Link to="/jobs" className={`nav-link ${isActive('/jobs') ? 'active' : ''}`}>
@@ -275,10 +340,24 @@ export const Navbar: React.FC = () => {
           {isAuthenticated ? (
             <>
               {/* User Profile Chip */}
-              <Link to="/profile" className="nav-user-chip" title="View Profile">
+              <Link
+                to={user?.role === 'admin' ? '/admin?tab=settings' : '/profile'}
+                className="nav-user-chip"
+                title={user?.role === 'admin' ? 'Admin Settings' : 'View Profile'}
+              >
                 <div className="nav-user-avatar" style={{ overflow: 'hidden' }}>
                   {user?.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.fullName || 'User'}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        if (e.currentTarget.parentElement) {
+                          e.currentTarget.parentElement.innerText = getInitials(user?.fullName);
+                        }
+                      }}
+                    />
                   ) : (
                     getInitials(user?.fullName)
                   )}
@@ -292,16 +371,18 @@ export const Navbar: React.FC = () => {
               {/* Theme Switcher */}
               <ThemeToggle />
 
-              {/* Feedback Button */}
-              <button
-                type="button"
-                onClick={() => setFeedbackOpen(true)}
-                className="btn btn-secondary btn-sm nav-feedback-btn"
-                title="Send platform feedback"
-              >
-                <MessageSquare size={14} />
-                <span className="nav-feedback-text">Feedback</span>
-              </button>
+              {/* Feedback Button - Only shown for Candidates and Recruiters (Admins review via Feedback Inbox) */}
+              {user?.role !== 'admin' && (
+                <button
+                  type="button"
+                  onClick={() => setFeedbackOpen(true)}
+                  className="btn btn-secondary btn-sm nav-feedback-btn"
+                  title="Send platform feedback"
+                >
+                  <MessageSquare size={14} />
+                  <span className="nav-feedback-text">Feedback</span>
+                </button>
+              )}
 
               {/* Desktop Logout Button */}
               <button
@@ -345,7 +426,17 @@ export const Navbar: React.FC = () => {
             <div className="nav-mobile-user-card">
               <div className="nav-user-avatar" style={{ width: '36px', height: '36px', fontSize: '0.9rem', overflow: 'hidden' }}>
                 {user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.fullName || 'User'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      if (e.currentTarget.parentElement) {
+                        e.currentTarget.parentElement.innerText = getInitials(user?.fullName);
+                      }
+                    }}
+                  />
                 ) : (
                   getInitials(user?.fullName)
                 )}
@@ -361,74 +452,108 @@ export const Navbar: React.FC = () => {
                   <span>{user?.email}</span>
                 </div>
               </div>
-              <Link to="/profile" className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }}>
-                Profile
+              <Link
+                to={user?.role === 'admin' ? '/admin?tab=settings' : '/profile'}
+                className="btn btn-secondary btn-sm"
+                style={{ flexShrink: 0 }}
+              >
+                {user?.role === 'admin' ? 'Settings' : 'Profile'}
               </Link>
             </div>
 
             <div className="nav-mobile-links-grid">
-              <Link to="/dashboard" className={`nav-mobile-link ${isActive('/dashboard') ? 'active' : ''}`}>
-                <LayoutDashboard size={17} />
-                <span>Dashboard</span>
-              </Link>
-
-              {user?.role === 'job_seeker' && (
+              {user?.role === 'admin' ? (
+                /* Admin Mobile Links */
                 <>
-                  <Link to="/resume/builder" className={`nav-mobile-link ${isActive('/resume/builder') ? 'active' : ''}`}>
+                  <Link to="/admin" className={`nav-mobile-link ${location.pathname === '/admin' && (!location.search || location.search === '?tab=overview') ? 'active' : ''}`}>
+                    <ShieldCheck size={17} />
+                    <span>Admin Overview</span>
+                  </Link>
+                  <Link to="/admin?tab=users" className={`nav-mobile-link ${location.search.includes('tab=users') ? 'active' : ''}`}>
+                    <Users size={17} />
+                    <span>Users Directory</span>
+                  </Link>
+                  <Link to="/admin?tab=jobs" className={`nav-mobile-link ${location.search.includes('tab=jobs') ? 'active' : ''}`}>
+                    <Briefcase size={17} />
+                    <span>Job Moderation</span>
+                  </Link>
+                  <Link to="/admin?tab=resumes" className={`nav-mobile-link ${location.search.includes('tab=resumes') ? 'active' : ''}`}>
                     <FileText size={17} />
-                    <span>Resume Builder</span>
+                    <span>Resumes & ATS</span>
                   </Link>
-                  <Link to="/resume/templates" className={`nav-mobile-link ${isActive('/resume/templates') ? 'active' : ''}`}>
-                    <Sparkles size={17} />
-                    <span>Templates Gallery</span>
-                  </Link>
-                  <Link to="/resume/analysis" className={`nav-mobile-link ${isActive('/resume/analysis') ? 'active' : ''}`}>
-                    <Upload size={17} />
-                    <span>ATS Analysis</span>
-                  </Link>
-                  <Link to="/jobs/recommended" className={`nav-mobile-link ${isActive('/jobs/recommended') ? 'active' : ''}`}>
-                    <Briefcase size={17} />
-                    <span>Match Jobs</span>
-                  </Link>
-                  <Link to="/applications" className={`nav-mobile-link ${isActive('/applications') ? 'active' : ''}`}>
+                  <Link to="/admin?tab=applications" className={`nav-mobile-link ${location.search.includes('tab=applications') ? 'active' : ''}`}>
                     <ClipboardList size={17} />
-                    <span>My Applications</span>
+                    <span>Applications Tracker</span>
+                  </Link>
+                  <Link to="/admin?tab=feedback" className={`nav-mobile-link ${location.search.includes('tab=feedback') ? 'active' : ''}`}>
+                    <MessageSquare size={17} />
+                    <span>Feedback Inbox</span>
+                  </Link>
+                  <Link to="/admin?tab=settings" className={`nav-mobile-link ${location.search.includes('tab=settings') ? 'active' : ''}`}>
+                    <Activity size={17} />
+                    <span>System Diagnostics</span>
                   </Link>
                 </>
-              )}
-
-              {user?.role === 'recruiter' && (
+              ) : (
+                /* Candidate & Recruiter Mobile Links */
                 <>
-                  <Link to="/recruiter/jobs" className={`nav-mobile-link ${isActive('/recruiter/jobs') ? 'active' : ''}`}>
-                    <Briefcase size={17} />
-                    <span>Manage Jobs</span>
+                  <Link to="/dashboard" className={`nav-mobile-link ${isActive('/dashboard') ? 'active' : ''}`}>
+                    <LayoutDashboard size={17} />
+                    <span>Dashboard</span>
                   </Link>
-                  <Link to="/recruiter/jobs/new" className={`nav-mobile-link ${isActive('/recruiter/jobs/new') ? 'active' : ''}`}>
-                    <PlusCircle size={17} />
-                    <span>Post Job</span>
+
+                  {user?.role === 'job_seeker' && (
+                    <>
+                      <Link to="/resume/builder" className={`nav-mobile-link ${isActive('/resume/builder') ? 'active' : ''}`}>
+                        <FileText size={17} />
+                        <span>Resume Builder</span>
+                      </Link>
+                      <Link to="/resume/templates" className={`nav-mobile-link ${isActive('/resume/templates') ? 'active' : ''}`}>
+                        <Sparkles size={17} />
+                        <span>Templates Gallery</span>
+                      </Link>
+                      <Link to="/resume/analysis" className={`nav-mobile-link ${isActive('/resume/analysis') ? 'active' : ''}`}>
+                        <Upload size={17} />
+                        <span>ATS Analysis</span>
+                      </Link>
+                      <Link to="/jobs/recommended" className={`nav-mobile-link ${isActive('/jobs/recommended') ? 'active' : ''}`}>
+                        <Briefcase size={17} />
+                        <span>Match Jobs</span>
+                      </Link>
+                      <Link to="/applications" className={`nav-mobile-link ${isActive('/applications') ? 'active' : ''}`}>
+                        <ClipboardList size={17} />
+                        <span>My Applications</span>
+                      </Link>
+                    </>
+                  )}
+
+                  {user?.role === 'recruiter' && (
+                    <>
+                      <Link to="/recruiter/jobs" className={`nav-mobile-link ${isActive('/recruiter/jobs') ? 'active' : ''}`}>
+                        <Briefcase size={17} />
+                        <span>Manage Jobs</span>
+                      </Link>
+                      <Link to="/recruiter/jobs/new" className={`nav-mobile-link ${isActive('/recruiter/jobs/new') ? 'active' : ''}`}>
+                        <PlusCircle size={17} />
+                        <span>Post Job</span>
+                      </Link>
+                    </>
+                  )}
+
+                  <Link to="/courses" className={`nav-mobile-link ${isActive('/courses') ? 'active' : ''}`}>
+                    <GraduationCap size={17} />
+                    <span>Free Courses</span>
+                  </Link>
+                  <Link to="/jobs" className={`nav-mobile-link ${isActive('/jobs') ? 'active' : ''}`}>
+                    <Search size={17} />
+                    <span>Browse Jobs</span>
+                  </Link>
+                  <Link to="/profile" className={`nav-mobile-link ${isActive('/profile') ? 'active' : ''}`}>
+                    <UserCheck size={17} />
+                    <span>My Profile</span>
                   </Link>
                 </>
               )}
-
-              {user?.role === 'admin' && (
-                <Link to="/admin" className={`nav-mobile-link ${isActive('/admin') ? 'active' : ''}`} style={{ color: 'var(--primary-600)', fontWeight: 600 }}>
-                  <ShieldCheck size={17} />
-                  <span>Admin Panel</span>
-                </Link>
-              )}
-
-              <Link to="/courses" className={`nav-mobile-link ${isActive('/courses') ? 'active' : ''}`}>
-                <GraduationCap size={17} />
-                <span>Free Courses</span>
-              </Link>
-              <Link to="/jobs" className={`nav-mobile-link ${isActive('/jobs') ? 'active' : ''}`}>
-                <Search size={17} />
-                <span>Browse Jobs</span>
-              </Link>
-              <Link to="/profile" className={`nav-mobile-link ${isActive('/profile') ? 'active' : ''}`}>
-                <UserCheck size={17} />
-                <span>My Profile</span>
-              </Link>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.5rem', borderTop: '1px solid var(--slate-200)', marginTop: '0.5rem' }}>
@@ -437,15 +562,18 @@ export const Navbar: React.FC = () => {
             </div>
 
             <div style={{ paddingTop: '0.5rem', borderTop: '1px solid var(--slate-200)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <button
-                type="button"
-                onClick={() => { setFeedbackOpen(true); setMobileMenuOpen(false); }}
-                className="btn btn-secondary btn-sm"
-                style={{ width: '100%', justifyContent: 'center' }}
-              >
-                <MessageSquare size={15} />
-                <span>Give Platform Feedback</span>
-              </button>
+              {/* Only show feedback in mobile menu for candidate/recruiter */}
+              {user?.role !== 'admin' && (
+                <button
+                  type="button"
+                  onClick={() => { setFeedbackOpen(true); setMobileMenuOpen(false); }}
+                  className="btn btn-secondary btn-sm"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                >
+                  <MessageSquare size={15} />
+                  <span>Give Platform Feedback</span>
+                </button>
+              )}
               <button
                 onClick={handleLogout}
                 className="btn btn-secondary btn-sm"

@@ -206,11 +206,15 @@ export const PublicJobsPage: React.FC = () => {
               </p>
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '1.25rem' }}>
-                {job.requiredSkills && job.requiredSkills.map((s, i) => (
-                  <span key={i} className="badge badge-primary">
-                    {s}
-                  </span>
-                ))}
+                {job.requiredSkills && job.requiredSkills.map((s, i) => {
+                  const isLong = s.length > 36;
+                  const displaySkill = isLong ? s.slice(0, 36) + '...' : s;
+                  return (
+                    <span key={i} className="badge badge-primary" title={s}>
+                      {displaySkill}
+                    </span>
+                  );
+                })}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid var(--slate-100)', flexWrap: 'wrap', gap: '0.75rem' }}>

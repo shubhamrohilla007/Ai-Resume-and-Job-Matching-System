@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AlertTriangle,
   Sparkles,
@@ -145,29 +146,31 @@ export const SmartApplyModal: React.FC<SmartApplyModalProps> = ({
     }
   };
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(15, 23, 42, 0.75)',
         backdropFilter: 'blur(4px)',
-        zIndex: 9999,
+        zIndex: 999999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1rem',
+        padding: '1.25rem 1rem',
+        overflowY: 'auto',
       }}
       onClick={onClose}
     >
       <div
         style={{
+          margin: 'auto',
           backgroundColor: 'var(--card-bg, #ffffff)',
           color: 'var(--text-primary, #0f172a)',
           borderRadius: '16px',
           maxWidth: step === 'review' ? '840px' : '560px',
           width: '100%',
-          maxHeight: '90vh',
+          maxHeight: 'calc(100vh - 2.5rem)',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)',
@@ -790,6 +793,7 @@ export const SmartApplyModal: React.FC<SmartApplyModalProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

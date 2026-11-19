@@ -484,8 +484,13 @@ export const MyApplicationsPage: React.FC = () => {
                         Company Site <ExternalLink size={13} />
                       </a>
                     )}
-                    <Link to="/jobs/recommended" className="btn btn-secondary btn-sm">
-                      Compare Matches
+                    <Link
+                      to="/jobs/recommended"
+                      className="btn btn-secondary btn-sm"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                    >
+                      <Briefcase size={13} />
+                      <span>Explore More Jobs</span>
                     </Link>
                   </div>
                 </div>

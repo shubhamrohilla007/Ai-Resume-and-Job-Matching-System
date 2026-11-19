@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { adminApi, feedbackApi } from '../api/client';
 import {
@@ -45,7 +46,26 @@ type AdminTab =
 
 export const AdminDashboardPage: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTab = searchParams.get('tab') as AdminTab | null;
+  const validTabs: AdminTab[] = ['overview', 'users', 'recruiters', 'jobs', 'resumes', 'applications', 'logs', 'feedback', 'settings'];
+  const initialTab = urlTab && validTabs.includes(urlTab) ? urlTab : 'overview';
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialTab);
+
+  useEffect(() => {
+    if (urlTab && validTabs.includes(urlTab) && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab]);
+
+  const handleTabChange = (tabId: AdminTab) => {
+    setActiveTab(tabId);
+    if (tabId === 'overview') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab: tabId });
+    }
+  };
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -555,7 +575,7 @@ export const AdminDashboardPage: React.FC = () => {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as AdminTab)}
+              onClick={() => handleTabChange(tab.id as AdminTab)}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
